@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+
+    <!-- Glowing Rim Gradient -->
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05"/>
+    </linearGradient>
+
+    <!-- Checkerboard Pattern for Transparency Concept -->
+    <pattern id="checker" width="32" height="32" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#ffffff" fill-opacity="0.08"/>
+      <rect x="16" width="16" height="16" fill="#000000" fill-opacity="0.08"/>
+      <rect y="16" width="16" height="16" fill="#000000" fill-opacity="0.08"/>
+      <rect x="16" y="16" width="16" height="16" fill="#ffffff" fill-opacity="0.08"/>
+    </pattern>
+
+    <!-- Sparkle Shadow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.35"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#ffffff" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect x="16" y="16" width="480" height="480" rx="112" ry="112" fill="url(#bgGrad)"/>
+
+  <!-- Subtle Checkerboard Cutout Texture overlay on left side -->
+  <path d="M 16,128 C 16,66 66,16 128,16 L 256,16 L 140,496 L 128,496 C 66,496 16,446 16,384 Z" fill="url(#checker)"/>
+
+  <!-- Outer Glass Rim Highlight -->
+  <rect x="18" y="18" width="476" height="476" rx="110" ry="110" fill="none" stroke="url(#rimGrad)" stroke-width="4"/>
+
+  <!-- Diagonal Cutout Energy Divider -->
+  <path d="M 230,20 L 120,492" stroke="#ffffff" stroke-opacity="0.18" stroke-width="6" stroke-dasharray="12 12" stroke-linecap="round"/>
+
+  <!-- Main AI Sparkle (4-point star matching app brand) -->
+  <g filter="url(#glow)">
+    <path d="M 276,108 C 276,182 232,226 158,226 C 232,226 276,270 276,344 C 276,270 320,226 394,226 C 320,226 276,182 276,108 Z" fill="#ffffff"/>
+  </g>
+
+  <!-- Secondary Companion Sparkle (Top-Right) -->
+  <path d="M 386,96 C 386,128 366,148 334,148 C 366,148 386,168 386,200 C 386,168 406,148 438,148 C 406,148 386,128 386,96 Z" fill="#ffffff" fill-opacity="0.9" filter="url(#glow)"/>
+
+  <!-- Modern Transparent "X" Symbol (Bottom-Right) -->
+  <g transform="translate(340, 340) scale(1.1)">
+    <!-- Stylized X representing BgRemoverX precision cutout -->
+    <path d="M -40,-40 L 40,40" stroke="#ffffff" stroke-width="22" stroke-linecap="round"/>
+    <path d="M 40,-40 L -40,40" stroke="#fcd34d" stroke-width="20" stroke-linecap="round"/>
+  </g>
+
+  <!-- Tiny Accent Sparkle (Bottom-Left) -->
+  <circle cx="100" cy="380" r="10" fill="#ffffff" fill-opacity="0.7"/>
+  <circle cx="130" cy="350" r="5" fill="#fcd34d" fill-opacity="0.8"/>
+</svg>
