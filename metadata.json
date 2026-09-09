@@ -1,0 +1,6 @@
+{
+  "name": "BgRemoverX - AI Background Remover & Color Changer",
+  "description": "Professional SaaS image background remover, dynamic color changer, realistic cast shadows, filters & tone grading studio, and batch processor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
