@@ -1,0 +1,34 @@
+# Apache / Hostinger / LiteSpeed Configuration for BgRemoverX
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Allow direct access to existing files and directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Allow direct access to sitemap.xml, robots.txt, and Google verification files
+  RewriteRule ^sitemap\.xml$ sitemap.xml [L]
+  RewriteRule ^robots\.txt$ robots.txt [L]
+  RewriteRule ^google[a-zA-Z0-9_-]+\.html$ - [L]
+
+  # Route all other URLs to index.html for SPA routing (e.g. /blog, /blog/*)
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Force correct MIME types for SEO files
+<IfModule mod_mime.c>
+  AddType application/xml .xml
+  AddType text/plain .txt
+</IfModule>
+
+<Files "sitemap.xml">
+  Header set Content-Type "application/xml; charset=UTF-8"
+  Header set Cache-Control "public, max-age=3600"
+</Files>
+
+<Files "robots.txt">
+  Header set Content-Type "text/plain; charset=UTF-8"
+  Header set Cache-Control "public, max-age=3600"
+</Files>

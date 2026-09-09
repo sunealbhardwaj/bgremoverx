@@ -17,6 +17,9 @@ import { LegalModals, LegalModalType } from './components/LegalModals';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { ProcessedImage, SampleImageItem, ProcessingMode } from './types';
 import { removeImageBackground, warmUpNeuralEngine } from './utils/segmentation';
+import { BlogList } from './components/blog/BlogList';
+import { BlogPostView } from './components/blog/BlogPostView';
+import { getBlogPostBySlug } from './data/blogPosts';
 
 export const App: React.FC = () => {
   // Theme Dark Mode state
@@ -24,6 +27,9 @@ export const App: React.FC = () => {
     return localStorage.getItem('cutout_theme') === 'dark' ||
       window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
+
+  // Client Routing State
+  const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname);
 
   // Editor State
   const [processedImage, setProcessedImage] = useState<ProcessedImage | null>(null);
@@ -40,11 +46,27 @@ export const App: React.FC = () => {
   // Pre-warm neural engine in the background for instantaneous <1s execution
   useEffect(() => {
     warmUpNeuralEngine();
-    
-    // Dynamic SEO landing page metadata based on path
-    const path = window.location.pathname;
+  }, []);
+
+  // Listen for browser forward/back buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Dynamic SEO metadata based on currentPath (when not on blog routes)
+  useEffect(() => {
+    const path = currentPath;
     const metaDescTag = document.querySelector('meta[name="description"]');
     
+    if (path.startsWith('/blog')) {
+      // Blog views handle their own article titles, descriptions, and JSON-LD
+      return;
+    }
+
     if (path.includes('background-remover')) {
       document.title = 'Free Background Remover Online | AI Cutout Tool - BgRemoverX';
       if (metaDescTag) metaDescTag.setAttribute('content', 'Use BgRemoverX free online background remover to instantly extract subjects, remove photo backgrounds, and download 4K transparent PNGs with no sign-up.');
@@ -63,11 +85,11 @@ export const App: React.FC = () => {
     } else if (path.includes('remove-white-background')) {
       document.title = 'Remove White Background from Image Online - BgRemoverX';
       if (metaDescTag) metaDescTag.setAttribute('content', 'Quickly remove solid white or colored backgrounds from product photos. Perfect for Amazon, Shopify, and eBay listings.');
-    } else if (path.includes('blog')) {
-      document.title = 'AI Image Editing & E-Commerce Photography Blog - BgRemoverX';
-      if (metaDescTag) metaDescTag.setAttribute('content', 'Explore expert guides on e-commerce photography, background removal tutorials, AI computer vision models, and transparent PNG creation.');
+    } else {
+      document.title = 'BGRemoverX – 100% Free AI Background Remover Online (Ultra HD 4K)';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Remove background from image online free in 1 second with BGRemoverX. High-precision AI edge matting for hair, e-commerce products, and transparent PNGs.');
     }
-  }, []);
+  }, [currentPath]);
 
   // Synchronize Dark Mode Class on Document
   useEffect(() => {
@@ -91,10 +113,19 @@ export const App: React.FC = () => {
     setDarkMode((prev) => !prev);
   };
 
+  const navigateTo = (url: string) => {
+    window.history.pushState({}, '', url);
+    setCurrentPath(url.split('?')[0]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Scroll smoothly to a section on the page
   const scrollToSection = (sectionId: string) => {
     if (processedImage) {
       setProcessedImage(null);
+    }
+    if (currentPath !== '/') {
+      navigateTo('/');
     }
     setTimeout(() => {
       const element = document.getElementById(sectionId);
@@ -191,6 +222,9 @@ export const App: React.FC = () => {
     handleLoadSampleUrl(sample.originalUrl, `${sample.id}.jpg`, mode);
   };
 
+  const isBlogRoute = currentPath.startsWith('/blog');
+  const matchedBlogPost = isBlogRoute ? getBlogPostBySlug(currentPath) : undefined;
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 flex flex-col font-sans">
       {/* Global Navigation Header */}
@@ -202,14 +236,25 @@ export const App: React.FC = () => {
         onOpenAdmin={() => setShowMetricsModal(true)}
         onOpenMetrics={() => setShowMetricsModal(true)}
         onScrollToSection={scrollToSection}
+        onNavigate={navigateTo}
+        currentPath={currentPath}
         hasActiveProject={Boolean(processedImage)}
-        onResetProject={() => setProcessedImage(null)}
+        onResetProject={() => {
+          setProcessedImage(null);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
       {/* Main App Content Body */}
       <main className="flex-1">
-        {/* View Switching: Workspace Editor vs Hero Landing with Upload */}
-        {processedImage ? (
+        {isBlogRoute ? (
+          matchedBlogPost ? (
+            <BlogPostView post={matchedBlogPost} onNavigate={navigateTo} />
+          ) : (
+            <BlogList onNavigate={navigateTo} />
+          )
+        ) : processedImage ? (
+          /* View Switching: Workspace Editor vs Hero Landing with Upload */
           <div className="pt-4 pb-16 animate-in fade-in duration-300">
             <WorkspaceEditor
               processedImage={processedImage}
@@ -225,18 +270,22 @@ export const App: React.FC = () => {
             </div>
 
             {/* Hero Upload Section with drag-and-drop and instant sample selector */}
-            <HeroUpload
-              onFileSelected={handleFileSelected}
-              onSampleSelected={handleSampleSelected}
-              isProcessing={isProcessing}
-              progressStep={progressStep}
-              progressPercent={progressPercent}
-              errorMessage={errorMessage}
-              onClearError={() => setErrorMessage(null)}
-            />
+            <div id="editor-tool">
+              <HeroUpload
+                onFileSelected={handleFileSelected}
+                onSampleSelected={handleSampleSelected}
+                isProcessing={isProcessing}
+                progressStep={progressStep}
+                progressPercent={progressPercent}
+                errorMessage={errorMessage}
+                onClearError={() => setErrorMessage(null)}
+              />
+            </div>
 
             {/* 3-Step Simple Workflow */}
-            <HowItWorks />
+            <div id="how-it-works">
+              <HowItWorks />
+            </div>
 
             {/* Interactive Before & After Quality Showcase Slider */}
             <BeforeAfterShowcase
@@ -245,21 +294,29 @@ export const App: React.FC = () => {
             />
 
             {/* Comprehensive Features Grid */}
-            <Features />
+            <div id="features">
+              <Features />
+            </div>
 
             {/* In-Feed Billboard / High-Impact Sponsor Ad Slot */}
             <AdBanner type="billboard" slotId="ad-mid-billboard" />
 
             {/* Tailored Industry Use Cases */}
-            <UseCases
-              onSelectUseCase={(sampleUrl) => handleLoadSampleUrl(sampleUrl, 'industry_sample.jpg')}
-            />
+            <div id="use-cases">
+              <UseCases
+                onSelectUseCase={(sampleUrl) => handleLoadSampleUrl(sampleUrl, 'industry_sample.jpg')}
+              />
+            </div>
 
             {/* 100% Free Forever Ad-Supported Section */}
-            <PricingSection />
+            <div id="pricing">
+              <PricingSection />
+            </div>
 
             {/* SEO Knowledge Base & Mastery Guides */}
-            <SeoArticlesSection />
+            <div id="guides">
+              <SeoArticlesSection />
+            </div>
 
             {/* FAQ Accordion Section */}
             <FAQSection />
@@ -272,8 +329,8 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Floating Sticky Bottom Ad Strip */}
-      {!processedImage && (
+      {/* Floating Sticky Bottom Ad Strip (Only on Home when no active image) */}
+      {!isBlogRoute && !processedImage && (
         <AdBanner type="sticky-bottom" slotId="ad-floating-bottom" />
       )}
 
@@ -313,6 +370,7 @@ export const App: React.FC = () => {
         onOpenBatch={() => setShowBatchModal(true)}
         onOpenMetrics={() => setShowMetricsModal(true)}
         onOpenLegalModal={(type) => setActiveLegalModal(type)}
+        onNavigate={navigateTo}
       />
     </div>
   );

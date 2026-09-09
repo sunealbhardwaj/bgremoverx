@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
@@ -121,19 +122,17 @@ async function startServer() {
   }));
 
   // SEO: robots.txt
-  app.get("/robots.txt", (req, res) => {
-    const host = req.get("host") || "bgremoverx.com";
-    const protocol = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+  app.get("/robots.txt", (_req, res) => {
     const robotsTxt = [
       "User-agent: *",
       "Allow: /",
       "Disallow: /api/",
       "",
-      `# Sitemap`,
-      `Sitemap: ${protocol}://${host}/sitemap.xml`,
+      "# Google Search Console Sitemap",
+      "Sitemap: https://bgremoverx.com/sitemap.xml",
       "",
     ].join("\n");
-    res.type("text/plain").send(robotsTxt);
+    res.type("text/plain; charset=utf-8").send(robotsTxt);
   });
 
   // Google AdSense: ads.txt
@@ -144,129 +143,27 @@ async function startServer() {
       `google.com, ${pubId}, DIRECT, f08c47fec0942fa0`,
       "",
     ].join("\n");
-    res.type("text/plain").send(adsTxt);
+    res.type("text/plain; charset=utf-8").send(adsTxt);
   });
 
-  // SEO: sitemap.xml
-  app.get("/sitemap.xml", (req, res) => {
-    const host = req.get("host") || "bgremoverx.com";
-    const protocol = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
-    const baseUrl = `${protocol}://${host}`;
-    const today = new Date().toISOString().split("T")[0];
-
-    const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+  // SEO: sitemap.xml for Google Search Console
+  app.get("/sitemap.xml", (_req, res) => {
+    const sitemapPath = path.join(process.cwd(), "public", "sitemap.xml");
+    res.type("application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    if (fs.existsSync(sitemapPath)) {
+      const xmlContent = fs.readFileSync(sitemapPath, "utf-8");
+      return res.send(xmlContent);
+    }
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>${baseUrl}/</loc>
-    <lastmod>${today}</lastmod>
+    <loc>https://bgremoverx.com/</loc>
+    <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-  <url>
-    <loc>${baseUrl}/#upload</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#editor-tool</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#use-cases</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#guides</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#pricing</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#faq</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/background-remover</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/remove-background</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/ai-background-remover</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/free-background-remover</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/transparent-background</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/remove-white-background</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/blog</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/guides/ecommerce-white-background-guide</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/guides/how-ai-hair-fur-edge-matting-works</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/guides/official-passport-id-photo-requirements-guide</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/guides/png-vs-webp-vs-jpeg-transparent-formats</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-</urlset>`;
-
-    res.type("application/xml").send(sitemapXml);
+</urlset>`);
   });
 
   // API: Health check

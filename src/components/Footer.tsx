@@ -1,15 +1,17 @@
 import React from 'react';
-import { Sparkles, Shield, Heart, Github, Twitter, Linkedin, Zap, BookOpen } from 'lucide-react';
+import { Sparkles, Shield, Heart, Github, Twitter, Linkedin, Zap, BookOpen, ArrowRight, ExternalLink } from 'lucide-react';
 import { LegalModalType } from './LegalModals';
 
 export const Footer: React.FC<{ 
   onOpenBatch: () => void; 
   onOpenMetrics: () => void;
   onOpenLegalModal: (type: LegalModalType) => void;
+  onNavigate?: (url: string) => void;
 }> = ({
   onOpenBatch,
   onOpenMetrics,
   onOpenLegalModal,
+  onNavigate = (_url: string) => {},
 }) => {
   return (
     <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-xs">
@@ -34,6 +36,18 @@ export const Footer: React.FC<{
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>All Neural Processing Systems Operational</span>
             </div>
+
+            {/* Prominent Blog Callout Link */}
+            <div className="pt-2">
+              <button
+                onClick={() => onNavigate('/blog')}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-all font-semibold cursor-pointer shadow-xs"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <span>Visit BGRemoverX Blog & Guides</span>
+                <ArrowRight className="w-3 h-3 ml-1" />
+              </button>
+            </div>
           </div>
 
           {/* Column: Tools */}
@@ -43,67 +57,105 @@ export const Footer: React.FC<{
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="#upload" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <button
+                  onClick={() => onNavigate('/')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
                   Background Remover
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#upload" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <button
+                  onClick={() => onNavigate('/')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
                   Filters & Tone Studio
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#upload" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <button
+                  onClick={() => onNavigate('/')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
                   Background Color Changer
-                </a>
+                </button>
               </li>
               <li>
                 <button
                   onClick={onOpenBatch}
-                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
                 >
                   Batch Image Processor
                 </button>
               </li>
               <li>
-                <a href="#upload" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <button
+                  onClick={() => onNavigate('/')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
                   Cast Shadow Generator
-                </a>
+                </button>
               </li>
             </ul>
           </div>
 
           {/* Column: Resources & Guides */}
           <div className="space-y-3">
-            <h4 className="font-display font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
-              Guides & Solutions
+            <h4 className="font-display font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>Blog & Guides</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-bold">
+                NEW
+              </span>
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="#guides" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1">
+                <button
+                  onClick={() => onNavigate('/blog')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 font-semibold text-slate-900 dark:text-white text-left cursor-pointer"
+                >
                   <BookOpen className="w-3 h-3 text-indigo-500" />
-                  <span>Mastery Guides</span>
-                </a>
+                  <span>All Blog Guides (/blog)</span>
+                </button>
               </li>
               <li>
-                <a href="#use-cases" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                  Shopify & Amazon Sellers
-                </a>
+                <button
+                  onClick={() => onNavigate('/blog/how-to-remove-background-from-an-image-online')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  Remove Background Online
+                </button>
               </li>
               <li>
-                <a href="#use-cases" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                  Professional Headshots & Portraits
-                </a>
+                <button
+                  onClick={() => onNavigate('/blog/how-to-make-transparent-png')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  How to Make Transparent PNG
+                </button>
               </li>
               <li>
-                <a href="#use-cases" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                  YouTube & Social Media
-                </a>
+                <button
+                  onClick={() => onNavigate('/blog/remove-background-from-product-photos')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  Product Photo Editing
+                </button>
               </li>
               <li>
-                <a href="#pricing" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                  100% Free Forever Model
-                </a>
+                <button
+                  onClick={() => onNavigate('/blog/jpg-vs-png')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  JPG vs PNG Comparison
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/ai-background-remover-vs-photoshop')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  AI Remover vs Photoshop
+                </button>
               </li>
             </ul>
           </div>
@@ -184,14 +236,6 @@ export const Footer: React.FC<{
             >
               Terms
             </button>
-            <span>•</span>
-            <a href="/robots.txt" target="_blank" rel="noopener noreferrer" className="hover:underline">
-              robots.txt
-            </a>
-            <span>•</span>
-            <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="hover:underline">
-              sitemap.xml
-            </a>
             <span>•</span>
             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
               <Shield className="w-3.5 h-3.5" />
