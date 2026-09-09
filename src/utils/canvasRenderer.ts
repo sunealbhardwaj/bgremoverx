@@ -518,7 +518,7 @@ export async function downloadExportedImage(
   state: EditorState,
   customFormat?: 'png' | 'jpg' | 'webp',
   customQuality?: 'low' | 'medium' | 'high' | 'standard' | 'ultra',
-  customSize?: 'original' | '1080p' | '2048px' | '4k',
+  customSize?: 'original' | '2x' | '3x' | '4k' | '1080p' | '2048px',
   customFileName?: string
 ): Promise<string> {
   const exportCanvas = document.createElement('canvas');
@@ -527,7 +527,11 @@ export async function downloadExportedImage(
   const sizeSetting = customSize || state.exportSize;
 
   let scale = 1.0;
-  if (state.subjectAdjustments?.upscale && state.subjectAdjustments.upscale > 1 && sizeSetting === 'original') {
+  if (sizeSetting === '2x') {
+    scale = 2.0;
+  } else if (sizeSetting === '3x') {
+    scale = 3.0;
+  } else if (state.subjectAdjustments?.upscale && state.subjectAdjustments.upscale > 1 && sizeSetting === 'original') {
     scale = state.subjectAdjustments.upscale;
   } else if (sizeSetting === '1080p') {
     const maxDim = Math.max(image.originalWidth, image.originalHeight);

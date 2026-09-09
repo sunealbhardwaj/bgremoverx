@@ -116,7 +116,7 @@ export interface BatchItem {
 
 export type ExportFormat = 'png' | 'jpg' | 'webp';
 export type ExportQuality = 'low' | 'medium' | 'high' | 'standard' | 'ultra';
-export type ExportSize = 'original' | '1080p' | '2048px' | '4k';
+export type ExportSize = 'original' | '2x' | '3x' | '4k' | '1080p' | '2048px';
 
 export interface OutlineConfig {
   enabled: boolean;

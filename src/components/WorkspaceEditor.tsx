@@ -2721,14 +2721,14 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                   <div className="flex justify-between text-[11px] font-semibold text-slate-500 mb-1.5">
                     <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-bold">
                       <Sparkles className="w-3 h-3 text-amber-500 fill-amber-500" />
-                      <span>AI Upscaling (Super-Res)</span>
+                      <span>AI Upscaling & Quality</span>
                     </span>
                     <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">
-                      {editorState.subjectAdjustments.upscale}x {editorState.subjectAdjustments.upscale > 1 ? 'HD' : 'Native'}
+                      {editorState.subjectAdjustments.upscale * 100}% {editorState.subjectAdjustments.upscale === 3 ? 'Ultra HD' : editorState.subjectAdjustments.upscale === 2 ? 'HD' : editorState.subjectAdjustments.upscale === 4 ? '4K' : 'Native'}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                    {[1, 2, 4].map((scale) => (
+                  <div className="grid grid-cols-4 gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    {[1, 2, 3, 4].map((scale) => (
                       <button
                         key={scale}
                         type="button"
@@ -2747,7 +2747,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                             : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700'
                         }`}
                       >
-                        {scale}x {scale === 1 ? 'Standard' : scale === 2 ? 'HD' : 'Ultra 4K'}
+                        {scale === 1 ? '100%' : scale === 2 ? '200%' : scale === 3 ? '300%' : '400%'}
                       </button>
                     ))}
                   </div>
@@ -2919,24 +2919,25 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                       ? 'Compact (65%)'
                       : editorState.exportQuality === 'medium' || editorState.exportQuality === 'standard'
                       ? 'Balanced (85%)'
-                      : 'Studio (98%)'}
+                      : editorState.exportQuality === 'high'
+                      ? '200% HD (98%)'
+                      : '300% Ultra (100%)'}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['low', 'medium', 'high'] as const).map((q) => (
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(['low', 'medium', 'high', 'ultra'] as const).map((q) => (
                     <button
                       key={q}
                       type="button"
                       onClick={() => setEditorState((prev) => ({ ...prev, exportQuality: q }))}
                       className={`p-2 rounded-xl border text-center font-bold text-xs capitalize transition-all cursor-pointer ${
                         editorState.exportQuality === q ||
-                        (q === 'medium' && editorState.exportQuality === 'standard') ||
-                        (q === 'high' && editorState.exportQuality === 'ultra')
+                        (q === 'medium' && editorState.exportQuality === 'standard')
                           ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600'
                           : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300'
                       }`}
                     >
-                      {q}
+                      {q === 'ultra' ? '300% Ultra' : q === 'high' ? '200% HD' : q}
                     </button>
                   ))}
                 </div>
@@ -2960,6 +2961,36 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                     <span className="text-xs">Original (100%)</span>
                     <p className="text-[10px] text-slate-400 font-normal">
                       {currentImage.originalWidth} × {currentImage.originalHeight} px
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditorState((prev) => ({ ...prev, exportSize: '2x' }))}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      editorState.exportSize === '2x'
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 font-bold'
+                        : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <span className="text-xs">200% (2x HD)</span>
+                    <p className="text-[10px] text-slate-400 font-normal">
+                      {currentImage.originalWidth * 2} × {currentImage.originalHeight * 2} px
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditorState((prev) => ({ ...prev, exportSize: '3x' }))}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      editorState.exportSize === '3x'
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 font-bold'
+                        : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <span className="text-xs">300% (3x Ultra)</span>
+                    <p className="text-[10px] text-slate-400 font-normal">
+                      {currentImage.originalWidth * 3} × {currentImage.originalHeight * 3} px
                     </p>
                   </button>
 

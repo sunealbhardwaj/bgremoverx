@@ -87,8 +87,8 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
   const [sliderPos, setSliderPos] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [viewMode, setViewMode] = useState<'slider' | 'sideBySide'>('slider');
-  const [upscaleLevel, setUpscaleLevel] = useState<1 | 2 | 4>(2); // 1x, 2x HD, 4x Ultra
-  const [zoomLevel, setZoomLevel] = useState<number>(1); // 1x, 1.5x, 2x
+  const [upscaleLevel, setUpscaleLevel] = useState<1 | 2 | 3 | 4>(3); // 1x Native, 2x HD (200%), 3x Ultra (300%), 4x 4K (400%)
+  const [zoomLevel, setZoomLevel] = useState<number>(1); // 1x to 3x (300%)
   const [selectedBg, setSelectedBg] = useState<string>('checkerboard');
   const [loupeActive, setLoupeActive] = useState<boolean>(false);
   const [loupePos, setLoupePos] = useState<{ x: number; y: number; pctX: number; pctY: number } | null>(null);
@@ -159,6 +159,8 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
   // Image filter styling depending on upscale level (sub-pixel sharpening & high-acutance unsharp filter)
   const upscaleFilterStyle = upscaleLevel === 4
     ? 'contrast(1.08) brightness(1.01) saturate(1.04)'
+    : upscaleLevel === 3
+    ? 'contrast(1.06) brightness(1.01) saturate(1.03)'
     : upscaleLevel === 2
     ? 'contrast(1.04) brightness(1.01) saturate(1.02)'
     : 'none';
@@ -233,9 +235,23 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
                       : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400'
                   }`}
                 >
-                  <span>2x HD</span>
+                  <span>2x HD (200%)</span>
                   <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/40 text-white font-mono">
                     {current.baseWidth * 2}px
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUpscaleLevel(3)}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                    upscaleLevel === 3
+                      ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-400'
+                      : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
+                  }`}
+                >
+                  <span>3x Studio (300%)</span>
+                  <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/40 text-white font-mono">
+                    {current.baseWidth * 3}px
                   </span>
                 </button>
                 <button
@@ -247,7 +263,7 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
                       : 'text-slate-500 hover:text-purple-600 dark:hover:text-purple-400'
                   }`}
                 >
-                  <span>4x Ultra</span>
+                  <span>4x 4K</span>
                   <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/40 text-white font-mono">
                     {current.baseWidth * 4}px
                   </span>
@@ -317,8 +333,8 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
                   </span>
                   <button
                     type="button"
-                    disabled={zoomLevel >= 2.5}
-                    onClick={() => setZoomLevel((z) => Math.min(2.5, z + 0.5))}
+                    disabled={zoomLevel >= 3}
+                    onClick={() => setZoomLevel((z) => Math.min(3, z + 0.5))}
                     className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer"
                     title="Zoom In"
                   >

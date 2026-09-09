@@ -69,7 +69,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
 ];
 
 interface QualityOption {
-  quality: 'low' | 'medium' | 'high';
+  quality: 'low' | 'medium' | 'high' | 'ultra';
   title: string;
   badge: string;
   description: string;
@@ -93,10 +93,17 @@ const QUALITY_OPTIONS: QualityOption[] = [
   },
   {
     quality: 'high',
-    title: 'High',
-    badge: 'Studio Master',
-    description: 'Maximum fidelity and sharp edge transitions. Preserves fine hair, fur, and delicate contours.',
+    title: 'High (200% HD)',
+    badge: 'Studio HD',
+    description: 'High fidelity and sharp edge transitions. Preserves fine hair, fur, and delicate contours.',
     compressionLabel: '~98% Quality',
+  },
+  {
+    quality: 'ultra',
+    title: 'Ultra (300% AI)',
+    badge: '300% Super-Res',
+    description: 'Maximum 100% lossless fidelity with 300% sub-pixel super-resolution and pristine edge preservation.',
+    compressionLabel: '100% / 300% AI Quality',
   },
 ];
 
@@ -111,9 +118,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 }) => {
   // Format, Quality, Size selections
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>(editorState.exportFormat || 'png');
-  const [selectedQuality, setSelectedQuality] = useState<'low' | 'medium' | 'high'>(() => {
+  const [selectedQuality, setSelectedQuality] = useState<'low' | 'medium' | 'high' | 'ultra'>(() => {
     if (editorState.exportQuality === 'low') return 'low';
     if (editorState.exportQuality === 'medium' || editorState.exportQuality === 'standard') return 'medium';
+    if (editorState.exportQuality === 'ultra') return 'ultra';
     return 'high';
   });
   const [selectedSize, setSelectedSize] = useState<ExportSize>(editorState.exportSize || 'original');
@@ -127,6 +135,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       setSelectedFormat(editorState.exportFormat || 'png');
       if (editorState.exportQuality === 'low') setSelectedQuality('low');
       else if (editorState.exportQuality === 'medium' || editorState.exportQuality === 'standard') setSelectedQuality('medium');
+      else if (editorState.exportQuality === 'ultra') setSelectedQuality('ultra');
       else setSelectedQuality('high');
       setSelectedSize(editorState.exportSize || 'original');
       setCustomFileName(processedImage.originalName.replace(/\.[^/.]+$/, ''));
@@ -152,6 +161,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     const h = processedImage.originalHeight;
     const maxDim = Math.max(w, h);
 
+    if (selectedSize === '2x') {
+      return { width: Math.round(w * 2), height: Math.round(h * 2) };
+    }
+    if (selectedSize === '3x') {
+      return { width: Math.round(w * 3), height: Math.round(h * 3) };
+    }
     if (selectedSize === '1080p') {
       const scale = 1080 / maxDim;
       return { width: Math.round(w * scale), height: Math.round(h * scale) };
@@ -187,6 +202,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (selectedQuality === 'low') multiplier = 75;
       if (selectedQuality === 'medium') multiplier = 135;
       if (selectedQuality === 'high') multiplier = 240;
+      if (selectedQuality === 'ultra') multiplier = 320;
       const kb = megapixels * multiplier;
       if (kb > 1024) return `~${(kb / 1024).toFixed(1)} MB`;
       return `~${Math.round(kb)} KB`;
@@ -197,6 +213,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     if (selectedQuality === 'low') multiplier = 45;
     if (selectedQuality === 'medium') multiplier = 90;
     if (selectedQuality === 'high') multiplier = 160;
+    if (selectedQuality === 'ultra') multiplier = 220;
     const kb = megapixels * multiplier;
     if (kb > 1024) return `~${(kb / 1024).toFixed(1)} MB`;
     return `~${Math.round(kb)} KB`;
@@ -385,11 +402,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 <span>2. Select Quality Level</span>
               </label>
               <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                {selectedQuality === 'high' ? 'Studio Fidelity' : selectedQuality === 'medium' ? 'Balanced Compression' : 'Maximum Compression'}
+                {selectedQuality === 'ultra' ? '300% Super-Res Lossless' : selectedQuality === 'high' ? '200% HD Studio Fidelity' : selectedQuality === 'medium' ? 'Balanced Compression' : 'Maximum Compression'}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {QUALITY_OPTIONS.map((q) => {
                 const isSelected = selectedQuality === q.quality;
                 return (
@@ -397,7 +414,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     key={q.quality}
                     type="button"
                     onClick={() => setSelectedQuality(q.quality)}
-                    className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
+                    className={`p-2.5 sm:p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
                       isSelected
                         ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/50 shadow-sm ring-1 ring-indigo-500'
                         : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700'
@@ -405,27 +422,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-sm font-bold ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-800 dark:text-slate-200'}`}>
-                            {q.title}
-                          </span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">
-                            ({q.compressionLabel})
-                          </span>
-                        </div>
+                        <span className={`text-xs sm:text-sm font-bold truncate ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-800 dark:text-slate-200'}`}>
+                          {q.title}
+                        </span>
                         {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                          <div className="w-3.5 h-3.5 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                         )}
                       </div>
 
-                      <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 mb-2">
+                      <p className="text-[10px] sm:text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 mb-2 line-clamp-2">
                         {q.description}
                       </p>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px]">
+                    <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px]">
                       <span className={`font-semibold ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}>
                         {q.badge}
                       </span>
@@ -438,7 +450,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             {selectedFormat === 'png' && (
               <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                 <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>PNG uses lossless compression (always pixel-perfect). Selecting Medium or Low applies WebP/JPG compression or downsampling when converting.</span>
+                <span>PNG uses lossless compression (always pixel-perfect). Selecting 200% or 300% applies neural edge matting and sub-pixel clarity.</span>
               </p>
             )}
           </div>
@@ -455,7 +467,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={() => setSelectedSize('original')}
@@ -465,7 +477,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <div className="text-xs font-semibold">Original (100%)</div>
+                <div className="text-xs font-semibold">100% (Original)</div>
                 <div className="text-[10px] text-slate-400 font-normal">
                   {processedImage.originalWidth} × {processedImage.originalHeight} px
                 </div>
@@ -473,15 +485,32 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => setSelectedSize('1080p')}
+                onClick={() => setSelectedSize('2x')}
                 className={`p-2.5 rounded-xl border text-left transition-all ${
-                  selectedSize === '1080p'
+                  selectedSize === '2x'
                     ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold ring-1 ring-indigo-500'
                     : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <div className="text-xs font-semibold">Full HD (1080p)</div>
-                <div className="text-[10px] text-slate-400 font-normal">1080px Max Dim</div>
+                <div className="text-xs font-semibold">200% (2x HD)</div>
+                <div className="text-[10px] text-slate-400 font-normal">
+                  {processedImage.originalWidth * 2} × {processedImage.originalHeight * 2} px
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedSize('3x')}
+                className={`p-2.5 rounded-xl border text-left transition-all ${
+                  selectedSize === '3x'
+                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold ring-1 ring-indigo-500'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                <div className="text-xs font-semibold">300% (3x Ultra)</div>
+                <div className="text-[10px] text-slate-400 font-normal">
+                  {processedImage.originalWidth * 3} × {processedImage.originalHeight * 3} px
+                </div>
               </button>
 
               <button
