@@ -62,6 +62,11 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  // Google Search Console domain ownership verification
+  app.get("/google830e62e2912bd53b.html", (_req, res) => {
+    res.type("text/html").send("google-site-verification: google830e62e2912bd53b.html");
+  });
+
   // Serve static assets and public directory with CORS headers
   const publicPath = path.join(process.cwd(), "public");
   app.use(express.static(publicPath, {
