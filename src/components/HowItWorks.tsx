@@ -6,21 +6,21 @@ export const HowItWorks: React.FC = () => {
     {
       step: '01',
       title: 'Upload Your Image',
-      description: 'Drag and drop any JPG, PNG, or WEBP file, or paste directly from your clipboard.',
+      description: 'Drag and drop any JPG, PNG, or WEBP file or paste directly from clipboard into the free background remover.',
       icon: Upload,
       gradient: 'from-blue-500 to-indigo-600',
     },
     {
       step: '02',
-      title: 'Instant AI Background Removal',
-      description: 'Our neural segmentation engine detects the subject and isolates fine hair, fur, and edges in milliseconds.',
+      title: 'Instant Remove BG (AI Cutout)',
+      description: 'Our neural bg remover isolates the subject, executing precision bg remove with razor-sharp hair and edge matting.',
       icon: Sparkles,
       gradient: 'from-indigo-600 to-purple-600',
     },
     {
       step: '03',
-      title: 'Change Color & Download',
-      description: 'Pick from 24+ colors, modern gradients, studio backdrops, add realistic shadows, and export in 4K.',
+      title: 'Customize, Color & Download',
+      description: 'Export clean transparent PNGs, apply solid colors, or add realistic ground shadows in ultra-crisp 4K resolution.',
       icon: Download,
       gradient: 'from-purple-600 to-pink-600',
     },
@@ -31,13 +31,13 @@ export const HowItWorks: React.FC = () => {
       <div className="text-center max-w-3xl mx-auto mb-8 md:mb-10">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-4">
           <Zap className="w-3.5 h-3.5" />
-          <span>Streamlined Workflow</span>
+          <span>Streamlined AI Background Remover</span>
         </div>
         <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          How BgRemoverX Works in 3 Simple Steps
+          How to Remove BG & Remove Background in 3 Simple Steps
         </h2>
         <p className="mt-3 text-slate-600 dark:text-slate-400 text-sm sm:text-base">
-          No complex Photoshop lasso tools or pen selections needed. Completely automated.
+          No complex Photoshop lasso tools or pen selections needed. Fast, automated, 100% free bg remove tool.
         </p>
       </div>
 

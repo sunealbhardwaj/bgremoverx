@@ -3,8 +3,6 @@ import {
   Clock,
   Calendar,
   ChevronRight,
-  Share2,
-  Check,
   ArrowRight,
   Sparkles,
   HelpCircle,
@@ -19,6 +17,7 @@ import {
 import { BlogPost, BlogSection } from '../../types/blog';
 import { getRelatedBlogPosts } from '../../data/blogPosts';
 import { BlogCard } from './BlogCard';
+import { SocialShareButtons } from './SocialShareButtons';
 
 interface BlogPostViewProps {
   post: BlogPost;
@@ -26,7 +25,6 @@ interface BlogPostViewProps {
 }
 
 export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) => {
-  const [copied, setCopied] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const relatedPosts = getRelatedBlogPosts(post, 3);
 
@@ -163,12 +161,6 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
     };
   }, [post]);
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
   const scrollToSection = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     const element = document.getElementById(id);
@@ -282,23 +274,12 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
               </div>
             </div>
 
-            <button
-              onClick={handleCopyLink}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-500 transition-all cursor-pointer shadow-xs"
-              title="Share article link"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400">Link Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Share Article</span>
-                </>
-              )}
-            </button>
+            <SocialShareButtons
+              url={`https://bgremoverx.com/blog/${post.slug}`}
+              title={post.title}
+              variant="compact"
+              idPrefix="top-share"
+            />
           </div>
         </header>
 
@@ -565,6 +546,16 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
             </div>
           </section>
         )}
+
+        {/* Social Share Callout */}
+        <div className="mt-14">
+          <SocialShareButtons
+            url={`https://bgremoverx.com/blog/${post.slug}`}
+            title={post.title}
+            variant="expanded"
+            idPrefix="bottom-share"
+          />
+        </div>
 
         {/* Author Bio Card */}
         <div className="mt-14 p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">

@@ -164,20 +164,20 @@ export const HeroUpload: React.FC<HeroUploadProps> = ({
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-4 shadow-sm">
           <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-          <span>Next-Gen Neural AI Foreground Segmentation & Matting Studio</span>
+          <span>100% Free AI Background Remover & Remove BG Studio</span>
         </div>
 
         {/* Large Headline */}
         <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-[1.15]">
-          Remove Image Backgrounds{' '}
+          Free Background Remover —{' '}
           <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            with Studio Precision
+            Remove BG & Cut Out Photos
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="mt-3.5 text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          High-resolution alpha matting that preserves fine hair strands, furry edges, jewelry, and translucent glass with automatic halo decontamination.
+          Fastest AI bg remover to remove background from photos, cut out portraits or products, and bg remove images with sub-pixel edge matting and 4K transparent PNG downloads.
         </p>
 
         {/* Upload Container */}

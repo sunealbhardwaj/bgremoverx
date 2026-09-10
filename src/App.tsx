@@ -11,6 +11,7 @@ import { UseCases } from './components/UseCases';
 import { PricingSection } from './components/PricingSection';
 import { FAQSection } from './components/FAQSection';
 import { SeoArticlesSection } from './components/SeoArticlesSection';
+import { SeoContentSection } from './components/SeoContentSection';
 import { Footer } from './components/Footer';
 import { AdBanner } from './components/AdBanner';
 import { LegalModals, LegalModalType } from './components/LegalModals';
@@ -67,27 +68,33 @@ export const App: React.FC = () => {
       return;
     }
 
-    if (path.includes('background-remover')) {
-      document.title = 'Free Background Remover Online | AI Cutout Tool - BgRemoverX';
-      if (metaDescTag) metaDescTag.setAttribute('content', 'Use BgRemoverX free online background remover to instantly extract subjects, remove photo backgrounds, and download 4K transparent PNGs with no sign-up.');
+    if (path.includes('remove-bg') || path.includes('bg-remove')) {
+      document.title = 'Remove BG Online Free — Fast AI BG Remove & Cutout | BgRemoverX';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Remove BG online free in 1 second. Instant AI bg remove and background remover for portraits, products, and graphics. Export transparent 4K PNGs with no watermarks.');
+    } else if (path.includes('bg-remover')) {
+      document.title = 'Free BG Remover Online | AI Background Remover - BgRemoverX';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Best free BG remover and background remover. Remove bg and remove background from photos automatically with HD edge matting and custom backdrops.');
+    } else if (path.includes('background-remover')) {
+      document.title = 'Free Background Remover Online | Remove BG Tool - BgRemoverX';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Use BgRemoverX free online background remover to remove bg, remove background from photos, and download 4K transparent PNGs with no sign-up.');
     } else if (path.includes('remove-background')) {
-      document.title = 'Remove Background from Image Online Free | BgRemoverX';
-      if (metaDescTag) metaDescTag.setAttribute('content', 'Remove image background online in 1 second. Free AI background eraser for PNG, JPG and WebP photos with crystal clear hair and fur matting.');
+      document.title = 'Remove Background from Image Online Free (Remove BG) | BgRemoverX';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Remove background from image online free in 1 second. Free AI bg remover to remove bg from PNG, JPG, and WebP photos with hair and fur precision.');
     } else if (path.includes('ai-background-remover')) {
-      document.title = 'AI Background Remover | Professional Image Cutout - BgRemoverX';
-      if (metaDescTag) metaDescTag.setAttribute('content', 'Advanced AI background remover powered by neural IS-Net technology. Automatically isolate product photos, portraits, and graphics with zero manual tracing.');
+      document.title = 'AI Background Remover & BG Remover | Image Cutout - BgRemoverX';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Advanced AI background remover powered by neural matting. Remove bg automatically from product photos, portraits, and graphics with zero manual tracing.');
     } else if (path.includes('free-background-remover')) {
-      document.title = '100% Free Background Remover | No Watermark - BgRemoverX';
-      if (metaDescTag) metaDescTag.setAttribute('content', 'Enjoy 100% free background removal with unlimited 4K high-resolution downloads, e-commerce white backdrops, and batch processing.');
+      document.title = '100% Free Background Remover | No Watermark BG Remove - BgRemoverX';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Enjoy 100% free background remover with unlimited 4K high-resolution downloads, remove bg tools, e-commerce white backdrops, and batch processing.');
     } else if (path.includes('transparent-background')) {
-      document.title = 'Transparent Background Maker | PNG Cutout - BgRemoverX';
-      if (metaDescTag) metaDescTag.setAttribute('content', 'Make image backgrounds transparent instantly. Download professional transparent PNG files for logos, stickers, and graphic design.');
+      document.title = 'Transparent Background Maker | Remove BG Cutout - BgRemoverX';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Make image backgrounds transparent instantly. Remove bg and download professional transparent PNG files for logos, stickers, and graphic design.');
     } else if (path.includes('remove-white-background')) {
       document.title = 'Remove White Background from Image Online - BgRemoverX';
-      if (metaDescTag) metaDescTag.setAttribute('content', 'Quickly remove solid white or colored backgrounds from product photos. Perfect for Amazon, Shopify, and eBay listings.');
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Quickly remove background and solid white backdrops from product photos. Perfect for Amazon, Shopify, and eBay listings.');
     } else {
-      document.title = 'BGRemoverX – 100% Free AI Background Remover Online (Ultra HD 4K)';
-      if (metaDescTag) metaDescTag.setAttribute('content', 'Remove background from image online free in 1 second with BGRemoverX. High-precision AI edge matting for hair, e-commerce products, and transparent PNGs.');
+      document.title = 'Free Background Remover — Remove BG & Remove Background Online (AI BG Remover)';
+      if (metaDescTag) metaDescTag.setAttribute('content', '100% Free AI background remover and bg remover tool. Easily remove bg, remove background from photos, and bg remove images online in seconds. Download 4K transparent PNGs with no sign-up.');
     }
   }, [currentPath]);
 
@@ -307,6 +314,12 @@ export const App: React.FC = () => {
                 onSelectUseCase={(sampleUrl) => handleLoadSampleUrl(sampleUrl, 'industry_sample.jpg')}
               />
             </div>
+
+            {/* Semantic SEO Content: Remove BG & Background Remover Guide */}
+            <SeoContentSection
+              onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onNavigate={(url) => navigateTo(url)}
+            />
 
             {/* 100% Free Forever Ad-Supported Section */}
             <div id="pricing">

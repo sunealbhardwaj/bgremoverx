@@ -29,7 +29,7 @@ export const Footer: React.FC<{
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
-              Professional AI Background Remover & Color Changer. Sub-pixel edge matting for fine hair, e-commerce products, cars, and portraits with instant transparent PNG export.
+              100% Free AI Background Remover & Remove BG Studio. Fast, high-precision bg remove tool for hair, e-commerce product photos, and portraits with instant 4K transparent PNG exports.
             </p>
 
             <div className="flex items-center gap-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -61,7 +61,7 @@ export const Footer: React.FC<{
                   onClick={() => onNavigate('/')}
                   className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
                 >
-                  Background Remover
+                  Remove BG (AI Cutout)
                 </button>
               </li>
               <li>
@@ -69,15 +69,7 @@ export const Footer: React.FC<{
                   onClick={() => onNavigate('/')}
                   className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
                 >
-                  Filters & Tone Studio
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate('/')}
-                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
-                >
-                  Background Color Changer
+                  AI Background Remover
                 </button>
               </li>
               <li>
@@ -85,7 +77,7 @@ export const Footer: React.FC<{
                   onClick={onOpenBatch}
                   className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
                 >
-                  Batch Image Processor
+                  Batch BG Remover (Bulk)
                 </button>
               </li>
               <li>
@@ -93,7 +85,15 @@ export const Footer: React.FC<{
                   onClick={() => onNavigate('/')}
                   className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
                 >
-                  Cast Shadow Generator
+                  Transparent PNG Maker
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  White Background Editor
                 </button>
               </li>
             </ul>
