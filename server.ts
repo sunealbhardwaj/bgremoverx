@@ -128,8 +128,9 @@ async function startServer() {
       "Allow: /",
       "Disallow: /api/",
       "",
-      "# Google Search Console Sitemap",
+      "# Google Search Console Sitemaps",
       "Sitemap: https://bgremoverx.com/sitemap.xml",
+      "Sitemap: https://bgremoverx.com/blog-sitemap.xml",
       "",
     ].join("\n");
     res.type("text/plain; charset=utf-8").send(robotsTxt);
@@ -146,7 +147,7 @@ async function startServer() {
     res.type("text/plain; charset=utf-8").send(adsTxt);
   });
 
-  // SEO: sitemap.xml for Google Search Console
+  // SEO: sitemap.xml for Google Search Console (Master Sitemap)
   app.get("/sitemap.xml", (_req, res) => {
     const sitemapPath = path.join(process.cwd(), "public", "sitemap.xml");
     res.type("application/xml; charset=utf-8");
@@ -164,6 +165,18 @@ async function startServer() {
     <priority>1.0</priority>
   </url>
 </urlset>`);
+  });
+
+  // SEO: blog-sitemap.xml & sitemap-blog.xml specifically for Google Search Console
+  app.get(["/blog-sitemap.xml", "/sitemap-blog.xml"], (_req, res) => {
+    const blogSitemapPath = path.join(process.cwd(), "public", "blog-sitemap.xml");
+    res.type("application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    if (fs.existsSync(blogSitemapPath)) {
+      const xmlContent = fs.readFileSync(blogSitemapPath, "utf-8");
+      return res.send(xmlContent);
+    }
+    res.status(404).send("Blog sitemap not found");
   });
 
   // API: Health check
