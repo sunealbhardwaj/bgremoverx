@@ -238,6 +238,50 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
     }
   }, [processedImage]);
 
+  // Split Comparison Slider: Global drag and touch tracking for seamless mobile & desktop sliding
+  useEffect(() => {
+    if (!isDraggingSplit) return;
+
+    const updateSplitFromClientX = (clientX: number) => {
+      if (!splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const pos = ((clientX - rect.left) / rect.width) * 100;
+      setSplitPosition(Math.max(2, Math.min(98, Math.round(pos * 10) / 10)));
+    };
+
+    const handleWindowPointerMove = (e: PointerEvent) => {
+      updateSplitFromClientX(e.clientX);
+    };
+
+    const handleWindowTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        if (e.cancelable) e.preventDefault();
+        updateSplitFromClientX(e.touches[0].clientX);
+      }
+    };
+
+    const handleWindowDragEnd = () => {
+      setIsDraggingSplit(false);
+    };
+
+    window.addEventListener('pointermove', handleWindowPointerMove);
+    window.addEventListener('pointerup', handleWindowDragEnd);
+    window.addEventListener('pointercancel', handleWindowDragEnd);
+    window.addEventListener('touchmove', handleWindowTouchMove, { passive: false });
+    window.addEventListener('touchend', handleWindowDragEnd);
+    window.addEventListener('touchcancel', handleWindowDragEnd);
+
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove);
+      window.removeEventListener('pointerup', handleWindowDragEnd);
+      window.removeEventListener('pointercancel', handleWindowDragEnd);
+      window.removeEventListener('touchmove', handleWindowTouchMove);
+      window.removeEventListener('touchend', handleWindowDragEnd);
+      window.removeEventListener('touchcancel', handleWindowDragEnd);
+    };
+  }, [isDraggingSplit]);
+
   // Main Canvas Render
   const updateCanvas = useCallback(async () => {
     if (compositionCanvasRef.current) {
@@ -1159,16 +1203,28 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                   AI Cutout
                 </div>
 
-                {/* Draggable Divider Handle */}
+                {/* Draggable Divider Handle & Ergonomic 48px Touch Hit Zone */}
                 <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)] cursor-ew-resize z-20"
-                  style={{ left: `${splitPosition}%` }}
+                  className="absolute top-0 bottom-0 w-12 -translate-x-1/2 cursor-ew-resize flex items-center justify-center z-20 touch-none select-none"
+                  style={{ left: `${splitPosition}%`, touchAction: 'none' }}
                   onPointerDown={(e) => {
                     e.stopPropagation();
+                    try {
+                      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+                    } catch (_) {}
                     setIsDraggingSplit(true);
                   }}
+                  onPointerUp={(e) => {
+                    try {
+                      (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+                    } catch (_) {}
+                    setIsDraggingSplit(false);
+                  }}
                 >
-                  <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white text-slate-800 shadow-xl border border-slate-200 flex items-center justify-center cursor-ew-resize hover:scale-110 active:scale-95 transition-transform">
+                  <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_10px_rgba(0,0,0,0.6)]" />
+                  <div className={`relative z-10 w-10 h-10 rounded-full bg-white text-slate-800 shadow-2xl border border-slate-200 flex items-center justify-center transition-all ${
+                    isDraggingSplit ? 'scale-115 ring-4 ring-indigo-500/40' : 'hover:scale-110 active:scale-95'
+                  }`}>
                     <ArrowLeftRight className="w-4 h-4 text-indigo-600" />
                   </div>
                 </div>
@@ -1227,6 +1283,76 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               />
             )}
           </div>
+
+          {/* Split Comparison Slider Range Scrubber Bar for Mobile & Desktop */}
+          {viewMode === 'split' && (
+            <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col gap-2">
+              <div className="flex items-center justify-between text-[11px] font-semibold">
+                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
+                  <span>Original Photo</span>
+                </span>
+                <span className="font-mono font-bold text-xs text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800/60">
+                  Slide: {Math.round(splitPosition)}%
+                </span>
+                <span className="text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1.5">
+                  <span>AI Cutout</span>
+                  <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block animate-pulse" />
+                </span>
+              </div>
+
+              {/* Native touch range slider */}
+              <div className="relative flex items-center px-0.5">
+                <input
+                  type="range"
+                  min={2}
+                  max={98}
+                  step={0.5}
+                  value={splitPosition}
+                  onChange={(e) => setSplitPosition(Number(e.target.value))}
+                  aria-label="Split Comparison Slider"
+                  className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                />
+              </div>
+
+              {/* Quick Jump Buttons */}
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setSplitPosition(5)}
+                  className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                    splitPosition <= 15
+                      ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold'
+                      : 'hover:text-indigo-600 dark:hover:text-white'
+                  }`}
+                >
+                  100% Original
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSplitPosition(50)}
+                  className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                    Math.abs(splitPosition - 50) <= 8
+                      ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold'
+                      : 'hover:text-indigo-600 dark:hover:text-white'
+                  }`}
+                >
+                  50/50 Split
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSplitPosition(95)}
+                  className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                    splitPosition >= 85
+                      ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold'
+                      : 'hover:text-indigo-600 dark:hover:text-white'
+                  }`}
+                >
+                  100% AI Cutout
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Quality Diagnostics Card Bar (Below Canvas) */}
           {qualityReport && (

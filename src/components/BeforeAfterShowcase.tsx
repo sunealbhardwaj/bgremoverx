@@ -102,11 +102,12 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
   const updatePosition = useCallback((clientX: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width <= 0) return;
     const pos = ((clientX - rect.left) / rect.width) * 100;
-    setSliderPos(Math.max(5, Math.min(95, pos)));
+    setSliderPos(Math.max(2, Math.min(98, Math.round(pos * 10) / 10)));
   }, []);
 
-  // Track loupe coordinates
+  // Track loupe coordinates (desktop only)
   const handleContainerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || isDragging) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -123,34 +124,106 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
     }
   };
 
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handlePointerMove = (e: PointerEvent) => {
-      e.preventDefault();
-      updatePosition(e.clientX);
-    };
-
-    const handlePointerUp = () => {
-      setIsDragging(false);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove, { passive: false });
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
-    };
-  }, [isDragging, updatePosition]);
-
+  // Pointer & Touch sliding lifecycle: works seamlessly on all iOS, Android, and Desktop browsers
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    // If clicking divider or dragging
+    // Only primary button or touch
+    if (e.button !== undefined && e.button !== 0) return;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch (_) {}
     setIsDragging(true);
     updatePosition(e.clientX);
   };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      updatePosition(e.clientX);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    } catch (_) {}
+    setIsDragging(false);
+  };
+
+  // Fallback and touch listeners to prevent mobile page scrolling while sliding
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        setIsDragging(true);
+        updatePosition(e.touches[0].clientX);
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        // Critical for mobile: prevent page scroll while dragging slider
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+        updatePosition(e.touches[0].clientX);
+      }
+    };
+
+    const onTouchEnd = () => {
+      setIsDragging(false);
+    };
+
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+    container.addEventListener('touchend', onTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, [updatePosition]);
+
+  // Window listeners as fail-safe when dragging moves outside container bounds
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const onWindowPointerMove = (e: PointerEvent) => {
+      updatePosition(e.clientX);
+    };
+
+    const onWindowTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+        updatePosition(e.touches[0].clientX);
+      }
+    };
+
+    const onWindowUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('pointermove', onWindowPointerMove);
+    window.addEventListener('pointerup', onWindowUp);
+    window.addEventListener('pointercancel', onWindowUp);
+    window.addEventListener('touchmove', onWindowTouchMove, { passive: false });
+    window.addEventListener('touchend', onWindowUp);
+    window.addEventListener('touchcancel', onWindowUp);
+
+    return () => {
+      window.removeEventListener('pointermove', onWindowPointerMove);
+      window.removeEventListener('pointerup', onWindowUp);
+      window.removeEventListener('pointercancel', onWindowUp);
+      window.removeEventListener('touchmove', onWindowTouchMove);
+      window.removeEventListener('touchend', onWindowUp);
+      window.removeEventListener('touchcancel', onWindowUp);
+    };
+  }, [isDragging, updatePosition]);
 
   // Compute resolution metrics based on upscale level
   const scaledWidth = current.baseWidth * upscaleLevel;
@@ -182,8 +255,8 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
           </p>
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex items-center justify-center gap-2 flex-wrap mb-6">
+        {/* Category Tabs: Horizontally Swipeable on Mobile */}
+        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-2 scrollbar-none mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
           {SHOWCASE_ITEMS.map((item, idx) => (
             <button
               key={item.id}
@@ -193,7 +266,7 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
                 setSelectedBg('default');
                 setZoomLevel(1);
               }}
-              className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeCategory === idx
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 scale-105'
                   : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-indigo-400'
@@ -205,20 +278,20 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
         </div>
 
         {/* Interactive Comparison & Upscaling Workspace */}
-        <div className="max-w-5xl mx-auto rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden p-5 sm:p-7">
+        <div className="max-w-5xl mx-auto rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden p-4 sm:p-7">
           {/* Top Control Bar: AI Upscaling Mode & Zoom/Loupe Tools */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
-            {/* AI Upscaling Level Controls */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+            {/* AI Upscaling Level Controls - Horizontally Scrollable on Mobile */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none max-w-full pb-1 sm:pb-0">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 shrink-0">
                 <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                 <span>AI Upscaling:</span>
               </span>
-              <div className="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div className="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
                 <button
                   type="button"
                   onClick={() => setUpscaleLevel(1)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                  className={`px-2 sm:px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer whitespace-nowrap ${
                     upscaleLevel === 1
                       ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
                       : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -229,13 +302,13 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
                 <button
                   type="button"
                   onClick={() => setUpscaleLevel(2)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                  className={`px-2 sm:px-2.5 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                     upscaleLevel === 2
                       ? 'bg-indigo-600 text-white shadow-xs'
                       : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400'
                   }`}
                 >
-                  <span>2x HD (200%)</span>
+                  <span>2x HD</span>
                   <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/40 text-white font-mono">
                     {current.baseWidth * 2}px
                   </span>
@@ -243,13 +316,13 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
                 <button
                   type="button"
                   onClick={() => setUpscaleLevel(3)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                  className={`px-2 sm:px-2.5 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                     upscaleLevel === 3
                       ? 'bg-amber-600 text-white shadow-xs ring-1 ring-amber-400'
                       : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'
                   }`}
                 >
-                  <span>3x Studio (300%)</span>
+                  <span>3x Studio</span>
                   <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/40 text-white font-mono">
                     {current.baseWidth * 3}px
                   </span>
@@ -257,7 +330,7 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
                 <button
                   type="button"
                   onClick={() => setUpscaleLevel(4)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                  className={`px-2 sm:px-2.5 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                     upscaleLevel === 4
                       ? 'bg-purple-600 text-white shadow-xs ring-1 ring-purple-400'
                       : 'text-slate-500 hover:text-purple-600 dark:hover:text-purple-400'
@@ -409,138 +482,222 @@ export const BeforeAfterShowcase: React.FC<{ darkMode: boolean; onTrySample: (ur
                 </div>
               ) : (
                 /* Split Slider Canvas View */
-                <div
-                  ref={containerRef}
-                  onPointerDown={handlePointerDown}
-                  onMouseMove={handleContainerMouseMove}
-                  onMouseLeave={handleContainerMouseLeave}
-                  className="relative aspect-[4/3] rounded-2xl overflow-hidden select-none cursor-ew-resize border border-slate-200 dark:border-slate-700 shadow-inner bg-checkerboard-light dark:bg-checkerboard-dark touch-none"
-                >
-                  {/* Scaled viewport container for Zoom support */}
+                <div className="flex flex-col gap-2.5">
                   <div
-                    className="absolute inset-0 transition-transform duration-150 origin-center"
-                    style={{
-                      transform: `scale(${zoomLevel})`,
-                    }}
+                    ref={containerRef}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
+                    onMouseMove={handleContainerMouseMove}
+                    onMouseLeave={handleContainerMouseLeave}
+                    className="relative aspect-[4/3] rounded-2xl overflow-hidden select-none cursor-ew-resize border border-slate-200 dark:border-slate-700 shadow-inner bg-checkerboard-light dark:bg-checkerboard-dark touch-none"
+                    style={{ touchAction: 'none' }}
                   >
-                    {/* Result Side: Transparent Checkerboard or Selected Color with AI Cutout */}
+                    {/* Scaled viewport container for Zoom support */}
                     <div
-                      className="absolute inset-0 flex items-center justify-center transition-colors duration-200"
+                      className="absolute inset-0 transition-transform duration-150 origin-center pointer-events-none"
                       style={{
-                        backgroundColor: activeBgColor === 'checkerboard' ? undefined : activeBgColor,
+                        transform: `scale(${zoomLevel})`,
                       }}
                     >
-                      <img
-                        src={current.cutoutUrl}
-                        alt={`${current.title} - AI Cutout`}
-                        referrerPolicy="no-referrer"
-                        className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-all duration-300"
-                        style={{
-                          filter: upscaleFilterStyle,
-                          imageRendering: upscaleLevel > 1 ? 'crisp-edges' : 'auto',
-                        }}
-                        loading="eager"
-                      />
-                      <span className="absolute top-3 right-3 px-2.5 py-1 rounded-md text-[10px] font-bold bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 flex items-center gap-1 z-10">
-                        <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300" />
-                        <span>AI Cutout ({upscaleLevel}x)</span>
-                      </span>
-                    </div>
-
-                    {/* Original Side: Left side clipped with clipPath so both images align 100% identically */}
-                    <div
-                      className="absolute inset-0 pointer-events-none select-none"
-                      style={{
-                        clipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
-                        WebkitClipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
-                      }}
-                    >
-                      <img
-                        src={current.originalUrl}
-                        alt={`${current.title} - Original`}
-                        referrerPolicy="no-referrer"
-                        className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
-                        loading="eager"
-                      />
-                      <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-md z-10">
-                        Original Photo (With Background)
-                      </span>
-                    </div>
-
-                    {/* Interactive Optical Sub-Pixel Loupe / Magnifier Lens */}
-                    {loupeActive && loupePos && (
+                      {/* Result Side: Transparent Checkerboard or Selected Color with AI Cutout */}
                       <div
-                        className="absolute w-36 h-36 rounded-full border-2 border-indigo-500 shadow-2xl overflow-hidden pointer-events-none z-30 transform -translate-x-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-[1px]"
+                        className="absolute inset-0 flex items-center justify-center transition-colors duration-200"
                         style={{
-                          left: `${loupePos.pctX}%`,
-                          top: `${loupePos.pctY}%`,
-                          boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+                          backgroundColor: activeBgColor === 'checkerboard' ? undefined : activeBgColor,
                         }}
                       >
-                        {/* Loupe Background Result Image Magnified 3x */}
-                        <div
-                          className="absolute inset-0"
+                        <img
+                          src={current.cutoutUrl}
+                          alt={`${current.title} - AI Cutout`}
+                          referrerPolicy="no-referrer"
+                          className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-all duration-300"
                           style={{
-                            backgroundColor: activeBgColor === 'checkerboard' ? undefined : activeBgColor,
+                            filter: upscaleFilterStyle,
+                            imageRendering: upscaleLevel > 1 ? 'crisp-edges' : 'auto',
+                          }}
+                          loading="eager"
+                        />
+                        <span className="absolute top-3 right-3 px-2.5 py-1 rounded-md text-[10px] font-bold bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 flex items-center gap-1 z-10">
+                          <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300" />
+                          <span>AI Cutout ({upscaleLevel}x)</span>
+                        </span>
+                      </div>
+
+                      {/* Original Side: Left side clipped with clipPath so both images align 100% identically */}
+                      <div
+                        className="absolute inset-0 pointer-events-none select-none"
+                        style={{
+                          clipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
+                          WebkitClipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
+                        }}
+                      >
+                        <img
+                          src={current.originalUrl}
+                          alt={`${current.title} - Original`}
+                          referrerPolicy="no-referrer"
+                          className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+                          loading="eager"
+                        />
+                        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-md z-10">
+                          Original Photo (With Background)
+                        </span>
+                      </div>
+
+                      {/* Interactive Optical Sub-Pixel Loupe / Magnifier Lens */}
+                      {loupeActive && loupePos && (
+                        <div
+                          className="absolute w-36 h-36 rounded-full border-2 border-indigo-500 shadow-2xl overflow-hidden pointer-events-none z-30 transform -translate-x-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-[1px]"
+                          style={{
+                            left: `${loupePos.pctX}%`,
+                            top: `${loupePos.pctY}%`,
+                            boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.5)',
                           }}
                         >
-                          <img
-                            src={current.cutoutUrl}
-                            alt="Magnified Cutout"
-                            className="absolute max-w-none pointer-events-none"
-                            style={{
-                              width: '300%',
-                              height: '300%',
-                              left: `${-loupePos.pctX * 3 + 50}%`,
-                              top: `${-loupePos.pctY * 3 + 50}%`,
-                              filter: upscaleFilterStyle,
-                              imageRendering: 'crisp-edges',
-                            }}
-                          />
-                        </div>
-
-                        {/* Loupe Split Original Image Magnified */}
-                        {loupePos.pctX < sliderPos && (
+                          {/* Loupe Background Result Image Magnified 3x */}
                           <div
-                            className="absolute inset-0 overflow-hidden"
+                            className="absolute inset-0"
                             style={{
-                              width: `${Math.max(0, Math.min(100, ((sliderPos - loupePos.pctX) / 100) * 300 + 50))}%`,
+                              backgroundColor: activeBgColor === 'checkerboard' ? undefined : activeBgColor,
                             }}
                           >
                             <img
-                              src={current.originalUrl}
-                              alt="Magnified Original"
+                              src={current.cutoutUrl}
+                              alt="Magnified Cutout"
                               className="absolute max-w-none pointer-events-none"
                               style={{
                                 width: '300%',
                                 height: '300%',
                                 left: `${-loupePos.pctX * 3 + 50}%`,
                                 top: `${-loupePos.pctY * 3 + 50}%`,
+                                filter: upscaleFilterStyle,
+                                imageRendering: 'crisp-edges',
                               }}
                             />
                           </div>
-                        )}
 
-                        {/* Loupe Reticle Crosshair & Zoom Label */}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <div className="w-full h-px bg-indigo-500/40" />
-                          <div className="h-full w-px bg-indigo-500/40 absolute" />
-                          <div className="w-2.5 h-2.5 rounded-full border border-indigo-400 absolute" />
-                          <span className="absolute bottom-1.5 px-1.5 py-0.2 rounded bg-indigo-900/80 text-[9px] font-mono font-bold text-white tracking-tight">
-                            {upscaleLevel * 2}x Loupe
-                          </span>
+                          {/* Loupe Split Original Image Magnified */}
+                          {loupePos.pctX < sliderPos && (
+                            <div
+                              className="absolute inset-0 overflow-hidden"
+                              style={{
+                                width: `${Math.max(0, Math.min(100, ((sliderPos - loupePos.pctX) / 100) * 300 + 50))}%`,
+                              }}
+                            >
+                              <img
+                                src={current.originalUrl}
+                                alt="Magnified Original"
+                                className="absolute max-w-none pointer-events-none"
+                                style={{
+                                  width: '300%',
+                                  height: '300%',
+                                  left: `${-loupePos.pctX * 3 + 50}%`,
+                                  top: `${-loupePos.pctY * 3 + 50}%`,
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Loupe Reticle Crosshair & Zoom Label */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-full h-px bg-indigo-500/40" />
+                            <div className="h-full w-px bg-indigo-500/40 absolute" />
+                            <div className="w-2.5 h-2.5 rounded-full border border-indigo-400 absolute" />
+                            <span className="absolute bottom-1.5 px-1.5 py-0.2 rounded bg-indigo-900/80 text-[9px] font-mono font-bold text-white tracking-tight">
+                              {upscaleLevel * 2}x Loupe
+                            </span>
+                          </div>
                         </div>
+                      )}
+                    </div>
+
+                    {/* Draggable Divider Line & Ergonomic Touch Hit Zone (48px wide) */}
+                    <div
+                      className="absolute top-0 bottom-0 w-12 -translate-x-1/2 cursor-ew-resize flex items-center justify-center z-20 touch-none select-none"
+                      style={{ left: `${sliderPos}%` }}
+                    >
+                      {/* Visual Divider Line */}
+                      <div className="absolute top-0 bottom-0 w-0.5 sm:w-1 bg-white shadow-[0_0_10px_rgba(0,0,0,0.6)]" />
+
+                      {/* Central Grab Handle Pill (Touch target min 44px for effortless mobile sliding) */}
+                      <div
+                        className={`relative z-10 w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-slate-900 border-2 border-indigo-600 shadow-2xl flex items-center justify-center text-indigo-600 transition-all ${
+                          isDragging
+                            ? 'scale-115 ring-4 ring-indigo-500/40 shadow-indigo-600/30'
+                            : 'hover:scale-110 active:scale-95'
+                        }`}
+                      >
+                        <SplitSquareVertical className="w-4 h-4 sm:w-4 sm:h-4 text-indigo-600" />
                       </div>
-                    )}
+                    </div>
                   </div>
 
-                  {/* Draggable Divider Line */}
-                  <div
-                    className="absolute top-0 bottom-0 w-1 bg-white cursor-ew-resize flex items-center justify-center shadow-2xl z-20"
-                    style={{ left: `${sliderPos}%` }}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 border-2 border-indigo-600 shadow-xl flex items-center justify-center text-indigo-600 active:scale-95 transition-transform">
-                      <SplitSquareVertical className="w-4 h-4" />
+                  {/* Dedicated Mobile & Desktop Precision Range Scrubber Bar */}
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 shadow-xs flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-[11px] font-semibold">
+                      <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
+                        <span>Original</span>
+                      </span>
+                      <span className="font-mono font-bold text-xs text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800/60">
+                        Slide to Compare: {Math.round(sliderPos)}%
+                      </span>
+                      <span className="text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1.5">
+                        <span>AI Cutout ({upscaleLevel}x)</span>
+                        <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block animate-pulse" />
+                      </span>
+                    </div>
+
+                    {/* Smooth Range Slider for 100% Touch Precision */}
+                    <div className="relative flex items-center px-0.5">
+                      <input
+                        type="range"
+                        min={2}
+                        max={98}
+                        step={0.5}
+                        value={sliderPos}
+                        onChange={(e) => setSliderPos(Number(e.target.value))}
+                        aria-label="Before and After Upscaling Comparison Slider"
+                        className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                      />
+                    </div>
+
+                    {/* Quick Snap Positions for Effortless One-Tap Navigation */}
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setSliderPos(5)}
+                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                          sliderPos <= 15
+                            ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold'
+                            : 'hover:text-indigo-600 dark:hover:text-white'
+                        }`}
+                      >
+                        100% Original
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSliderPos(50)}
+                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                          Math.abs(sliderPos - 50) <= 8
+                            ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold'
+                            : 'hover:text-indigo-600 dark:hover:text-white'
+                        }`}
+                      >
+                        50/50 Split
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSliderPos(95)}
+                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                          sliderPos >= 85
+                            ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold'
+                            : 'hover:text-indigo-600 dark:hover:text-white'
+                        }`}
+                      >
+                        100% AI Cutout
+                      </button>
                     </div>
                   </div>
                 </div>
