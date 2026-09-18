@@ -2,11 +2,13 @@ import { BlogPost, BlogCategory } from '../../types/blog';
 import { articlesPart1 } from './articlesPart1';
 import { articlesPart2 } from './articlesPart2';
 import { articlesPart3 } from './articlesPart3';
+import { articlesPart4 } from './articlesPart4';
 
 export const BLOG_POSTS: BlogPost[] = [
   ...articlesPart1,
   ...articlesPart2,
   ...articlesPart3,
+  ...articlesPart4,
 ];
 
 export const BLOG_CATEGORIES: BlogCategory[] = [

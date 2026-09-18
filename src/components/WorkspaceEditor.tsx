@@ -65,7 +65,6 @@ import {
   analyzeMaskQuality,
   restoreFullBodySilhouette
 } from '../utils/segmentation';
-import { AdBanner } from './AdBanner';
 import { ExportModal } from './ExportModal';
 
 interface WorkspaceEditorProps {
@@ -3032,10 +3031,6 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               </div>
             </div>
           )}
-          {/* Sponsored Ad placement to keep tool 100% free */}
-          <div className="pt-2">
-            <AdBanner type="rectangle" slotId="ad-workspace-sidebar" />
-          </div>
         </div>
       </div>
 

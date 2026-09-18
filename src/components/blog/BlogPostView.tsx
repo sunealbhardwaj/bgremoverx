@@ -206,6 +206,72 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
     }
   };
 
+  const renderBoldText = (text: string): React.ReactNode => {
+    const boldRegex = /\*\*([^*]+)\*\*/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(
+        <strong key={`${match.index}-${match[1]}`} className="font-semibold text-slate-900 dark:text-white">
+          {match[1]}
+        </strong>
+      );
+      lastIndex = boldRegex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts;
+  };
+
+  const renderRichText = (text: string) => {
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = linkRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(renderBoldText(text.substring(lastIndex, match.index)));
+      }
+      const anchorText = match[1];
+      const url = match[2];
+      const isInternal = url.startsWith('/') || url.includes('bgremoverx.com');
+
+      parts.push(
+        <button
+          key={`${match.index}-${url}`}
+          type="button"
+          onClick={() => {
+            if (isInternal) {
+              const cleanPath = url.replace(/^https?:\/\/bgremoverx\.com/, '');
+              onNavigate(cleanPath || '/');
+            } else {
+              window.open(url, '_blank', 'noopener,noreferrer');
+            }
+          }}
+          className="text-indigo-600 dark:text-indigo-400 font-semibold underline underline-offset-2 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors inline cursor-pointer text-left"
+        >
+          {anchorText}
+        </button>
+      );
+      lastIndex = linkRegex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(renderBoldText(text.substring(lastIndex)));
+    }
+
+    return parts;
+  };
+
   return (
     <div className="py-6 sm:py-10 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -321,7 +387,7 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
         <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed space-y-4 mb-10">
           {post.introParagraphs.map((p, idx) => (
             <p key={idx} className="leading-relaxed">
-              {p}
+              {renderRichText(p)}
             </p>
           ))}
         </div>
@@ -369,9 +435,26 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
                   key={pIdx}
                   className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed mb-4"
                 >
-                  {p}
+                  {renderRichText(p)}
                 </p>
               ))}
+
+              {/* Section illustrative image if present */}
+              {section.image && (
+                <figure className="my-6 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 shadow-xs">
+                  <img
+                    src={section.image.url}
+                    alt={section.image.alt}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-auto max-h-[420px] object-cover"
+                  />
+                  {section.image.caption && (
+                    <figcaption className="p-3 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200/60 dark:border-slate-800 italic">
+                      {section.image.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              )}
 
               {/* Numbered steps if present */}
               {section.numberedSteps && (
@@ -389,7 +472,7 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
                           {step.title}
                         </h4>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                          {step.text}
+                          {renderRichText(step.text)}
                         </p>
                       </div>
                     </div>
@@ -406,10 +489,44 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
                       className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 flex items-start gap-2.5 leading-relaxed"
                     >
                       <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0" />
-                      <span>{bp}</span>
+                      <span>{renderRichText(bp)}</span>
                     </li>
                   ))}
                 </ul>
+              )}
+
+              {/* Subsections if present */}
+              {section.subsections && section.subsections.length > 0 && (
+                <div className="my-6 space-y-6 pl-1 sm:pl-3 border-l-2 border-indigo-100 dark:border-indigo-900/60">
+                  {section.subsections.map((sub, subIdx) => (
+                    <div key={subIdx} className="space-y-3">
+                      <h4 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                        {sub.heading}
+                      </h4>
+                      {sub.paragraphs.map((subP, spIdx) => (
+                        <p
+                          key={spIdx}
+                          className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                        >
+                          {renderRichText(subP)}
+                        </p>
+                      ))}
+                      {sub.bulletPoints && (
+                        <ul className="space-y-1.5 pl-2">
+                          {sub.bulletPoints.map((subBp, sbpIdx) => (
+                            <li
+                              key={sbpIdx}
+                              className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2 leading-relaxed"
+                            >
+                              <div className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500 mt-2 shrink-0" />
+                              <span>{renderRichText(subBp)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
 
               {/* Callout box if present */}
@@ -498,7 +615,7 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
           </h3>
           <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
             {post.conclusionParagraphs.map((p, idx) => (
-              <p key={idx}>{p}</p>
+              <p key={idx}>{renderRichText(p)}</p>
             ))}
           </div>
         </div>

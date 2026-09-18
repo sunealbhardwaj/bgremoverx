@@ -55,6 +55,9 @@ const SAMPLE_ADS = [
   },
 ];
 
+// Master toggle to disable all ads across the application
+export const ADS_ENABLED = false;
+
 export const AdBanner: React.FC<AdBannerProps> = ({
   type = 'leaderboard',
   className = '',
@@ -65,6 +68,11 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   customImage,
   customLink,
 }) => {
+  // All ads disabled per user instruction ("website me sare ads hata do")
+  if (!ADS_ENABLED) {
+    return null;
+  }
+
   const [isDismissed, setIsDismissed] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [adIndex] = useState(() => Math.floor(Math.random() * SAMPLE_ADS.length));

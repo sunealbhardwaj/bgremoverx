@@ -13,7 +13,6 @@ import { FAQSection } from './components/FAQSection';
 import { SeoArticlesSection } from './components/SeoArticlesSection';
 import { SeoContentSection } from './components/SeoContentSection';
 import { Footer } from './components/Footer';
-import { AdBanner } from './components/AdBanner';
 import { LegalModals, LegalModalType } from './components/LegalModals';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { ProcessedImage, SampleImageItem, ProcessingMode } from './types';
@@ -271,11 +270,6 @@ export const App: React.FC = () => {
           </div>
         ) : (
           <div>
-            {/* Top Leaderboard Ad Slot */}
-            <div className="pt-1">
-              <AdBanner type="leaderboard" slotId="ad-top-leaderboard" />
-            </div>
-
             {/* Hero Upload Section with drag-and-drop and instant sample selector */}
             <div id="editor-tool">
               <HeroUpload
@@ -305,9 +299,6 @@ export const App: React.FC = () => {
               <Features />
             </div>
 
-            {/* In-Feed Billboard / High-Impact Sponsor Ad Slot */}
-            <AdBanner type="billboard" slotId="ad-mid-billboard" />
-
             {/* Tailored Industry Use Cases */}
             <div id="use-cases">
               <UseCases
@@ -333,19 +324,9 @@ export const App: React.FC = () => {
 
             {/* FAQ Accordion Section */}
             <FAQSection />
-
-            {/* Bottom Leaderboard Ad Slot */}
-            <div className="pb-3 sm:pb-4">
-              <AdBanner type="leaderboard" slotId="ad-bottom-leaderboard" />
-            </div>
           </div>
         )}
       </main>
-
-      {/* Floating Sticky Bottom Ad Strip (Only on Home when no active image) */}
-      {!isBlogRoute && !processedImage && (
-        <AdBanner type="sticky-bottom" slotId="ad-floating-bottom" />
-      )}
 
       {/* GDPR / Google AdSense Cookie Consent Banner */}
       <CookieConsentBanner

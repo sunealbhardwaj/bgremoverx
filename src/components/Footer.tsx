@@ -151,6 +151,38 @@ export const Footer: React.FC<{
               </li>
               <li>
                 <button
+                  onClick={() => onNavigate('/blog/ai-background-remover-real-test')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  10-Photo Background Test
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/common-background-removal-mistakes')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  7 Removal Mistakes to Avoid
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/product-photo-background-removal-tips')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  E-Commerce Product Tips
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/ai-background-remover-hair-fur-fine-details')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  Hair & Fur Removal Guide
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onNavigate('/blog/ai-background-remover-vs-photoshop')}
                   className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
                 >

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Check, Sparkles, Zap, Shield, Heart, Megaphone, Gift, Unlock } from 'lucide-react';
-import { AdBanner } from './AdBanner';
+import { Check, Sparkles, Zap, Shield, Heart, Gift, Unlock } from 'lucide-react';
 
 export const PricingSection: React.FC = () => {
   const freePerks = [
@@ -37,7 +36,7 @@ export const PricingSection: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto mb-8 md:mb-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold mb-4">
             <Gift className="w-3.5 h-3.5" />
-            <span>100% Free Forever & Ad-Supported</span>
+            <span>100% Free Forever</span>
           </div>
           <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             No Subscriptions. No Paid Upgrades.
@@ -69,25 +68,31 @@ export const PricingSection: React.FC = () => {
           ))}
         </div>
 
-        {/* Ad-Supported Disclosure & Sponsor Banner */}
+        {/* Commitment to Free Access Card */}
         <div className="rounded-3xl bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-950/80 p-8 shadow-lg shadow-indigo-500/5">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="max-w-xl text-left space-y-2">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-left space-y-2">
               <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                <Megaphone className="w-4 h-4" />
-                <span>How We Keep BgRemoverX 100% Free</span>
+                <Sparkles className="w-4 h-4" />
+                <span>Our Core Promise</span>
               </div>
               <h3 className="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                Powered by Privacy-Friendly Advertiser Sponsorships
+                Clean, Fast & Unrestricted Background Removal
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Instead of charging monthly subscription fees or restricting downloads behind paywalls, we partner with industry-leading creative tools and hosting sponsors. This allows unlimited background removals for designers, e-commerce sellers, and creators worldwide.
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
+                We believe background removal tools should be frictionless, private, and accessible to everyone. No watermarks on your work, no resolution downscaling, and no mandatory logins required.
               </p>
             </div>
 
-            {/* Sponsored Rectangle Unit */}
-            <div className="shrink-0 w-full lg:w-auto">
-              <AdBanner type="rectangle" slotId="ad-pricing-section" />
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+                <Shield className="w-4 h-4 text-indigo-500" />
+                <span>Zero Data Retention</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                <Unlock className="w-4 h-4 text-emerald-500" />
+                <span>Unlimited 4K</span>
+              </div>
             </div>
           </div>
         </div>

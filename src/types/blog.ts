@@ -31,6 +31,11 @@ export interface BlogSection {
     text: string;
   };
   table?: BlogTable;
+  image?: {
+    url: string;
+    alt: string;
+    caption?: string;
+  };
   subsections?: {
     heading: string;
     paragraphs: string[];

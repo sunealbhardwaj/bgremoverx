@@ -97,10 +97,10 @@ export const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({
         {/* Text */}
         {!showPreferences ? (
           <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11px]">
-            We use cookies and similar technologies to measure site traffic and serve personalized sponsor ads via Google AdSense. Ads keep this studio <strong>100% free with unlimited 4K exports</strong> for everyone.{' '}
+            We use cookies and local storage to measure site traffic, enhance your experience, and remember your preferences. Your images remain 100% private in your browser.{' '}
             <button
               onClick={() => onOpenLegalModal('privacy')}
-              className="text-indigo-600 dark:text-indigo-400 font-semibold underline"
+              className="text-indigo-600 dark:text-indigo-400 font-semibold underline cursor-pointer"
             >
               Read Privacy Policy
             </button>.
