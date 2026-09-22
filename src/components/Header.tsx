@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Layers, Sliders, Palette, Zap, Moon, Sun, BarChart3, BookOpen, Menu, X, ChevronRight, Home, HelpCircle } from 'lucide-react';
+import { Sparkles, Layers, Sliders, Palette, Zap, Moon, Sun, BarChart3, BookOpen, Menu, X, ChevronRight, Home, HelpCircle, Facebook } from 'lucide-react';
 
 export interface HeaderProps {
   darkMode: boolean;
@@ -135,6 +135,20 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Facebook Official Page */}
+          <a
+            href="https://www.facebook.com/bgremoverx"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Follow BgRemoverX on Facebook (@bgremoverx)"
+            aria-label="Official Facebook Page: @bgremoverx"
+            className={`w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-[#1877F2] dark:text-slate-400 dark:hover:text-[#1877F2] transition-colors cursor-pointer ${
+              darkMode ? 'hover:bg-slate-800/80' : 'hover:bg-slate-100'
+            }`}
+          >
+            <Facebook className="w-3.5 h-3.5 fill-current" />
+          </a>
+
           {/* Admin Metrics Trigger */}
           <button
             onClick={handleOpenAdmin}
@@ -262,6 +276,22 @@ export const Header: React.FC<HeaderProps> = ({
               New
             </span>
           </button>
+
+          <a
+            href="https://www.facebook.com/bgremoverx"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Official Facebook Page: @bgremoverx"
+            className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <Facebook className="w-4 h-4 text-[#1877F2] fill-current" />
+              <span>Facebook (@bgremoverx)</span>
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/80 dark:text-blue-300">
+              Follow
+            </span>
+          </a>
 
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
             <button

@@ -17,7 +17,8 @@ import {
   HelpCircle,
   Code,
   Megaphone,
-  Cpu
+  Cpu,
+  Facebook
 } from 'lucide-react';
 
 export type LegalModalType = 'privacy' | 'terms' | 'about' | 'contact' | 'disclaimer' | 'adsense-checker' | null;
@@ -292,6 +293,28 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                   <li><strong>Transparent Advertising:</strong> Clean, compliant ad placements with no deceptive popups or forced countdowns.</li>
                 </ul>
               </div>
+
+              {/* Social Community */}
+              <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-900/50 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#1877F2] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Facebook className="w-4 h-4 fill-current" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">Join Our Facebook Community</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Connect with creators and get the latest feature updates</p>
+                  </div>
+                </div>
+                <a
+                  href="https://www.facebook.com/bgremoverx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white text-xs font-bold flex items-center gap-1 shrink-0 shadow-xs transition-all"
+                >
+                  <span>Follow @bgremoverx</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </div>
           )}
 
@@ -322,10 +345,37 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleContactSubmit} className="space-y-4">
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Have feedback, a feature request, or an advertiser partnership inquiry? Fill out the form below or email us directly at <span className="font-bold text-indigo-600 dark:text-indigo-400">support@bgremoverx.com</span>.
-                  </p>
+                <div className="space-y-4">
+                  {/* Official Facebook Page Community Banner */}
+                  <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#1877F2] text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Facebook className="w-5 h-5 fill-current" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">
+                          Official Facebook Page: @bgremoverx
+                        </p>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                          Follow our Facebook page for tutorials, product updates, and community support.
+                        </p>
+                      </div>
+                    </div>
+                    <a
+                      href="https://www.facebook.com/bgremoverx"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all whitespace-nowrap"
+                    >
+                      <span>Visit Facebook Page</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+
+                  <form onSubmit={handleContactSubmit} className="space-y-4">
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      Have feedback, a feature request, or an advertiser partnership inquiry? Fill out the form below or email us directly at <span className="font-bold text-indigo-600 dark:text-indigo-400">support@bgremoverx.com</span>.
+                    </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -401,7 +451,8 @@ export const LegalModals: React.FC<LegalModalsProps> = ({
                     </button>
                   </div>
                 </form>
-              )}
+              </div>
+            )}
             </div>
           )}
 

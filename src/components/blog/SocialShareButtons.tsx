@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Twitter, Linkedin, Facebook, Link2, Check, Share2 } from 'lucide-react';
+import { Twitter, Linkedin, Facebook, Link2, Check, Share2, ExternalLink } from 'lucide-react';
 
 interface SocialShareButtonsProps {
   url: string;
@@ -165,7 +165,7 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
           <span>LinkedIn</span>
         </a>
 
-        {/* Facebook */}
+        {/* Facebook Share */}
         <a
           id={`${idPrefix}-facebook-btn`}
           href={facebookShareUrl}
@@ -176,6 +176,21 @@ export const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({
         >
           <Facebook className="w-4 h-4 transition-transform group-hover:scale-110" />
           <span>Facebook</span>
+        </a>
+
+        {/* Official Page Follow */}
+        <a
+          id={`${idPrefix}-facebook-page-btn`}
+          href="https://www.facebook.com/bgremoverx"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Follow BgRemoverX on Facebook"
+          title="Official Facebook Page"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#1877F2] dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 hover:bg-[#1877F2] hover:text-white text-xs font-bold transition-all shadow-xs cursor-pointer group"
+        >
+          <Facebook className="w-3.5 h-3.5 fill-current" />
+          <span>Follow @bgremoverx</span>
+          <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100" />
         </a>
 
         {/* Copy Link */}

@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Sparkles, Filter, ArrowRight, BookOpen, Layers, CheckCircle2 } from 'lucide-react';
+import { Search, Sparkles, Filter, ArrowRight, BookOpen, Layers, CheckCircle2, Facebook, ExternalLink } from 'lucide-react';
 import { BlogPost, BlogCategory } from '../../types/blog';
 import { BLOG_POSTS, BLOG_CATEGORIES, searchBlogPosts } from '../../data/blogPosts';
 import { BlogCard } from './BlogCard';
+import { BlogNewsletterSignup } from './BlogNewsletterSignup';
 
 interface BlogListProps {
   onNavigate: (url: string) => void;
@@ -14,6 +15,7 @@ const POSTS_PER_PAGE = 6;
 export const BlogList: React.FC<BlogListProps> = ({ onNavigate, page = 1 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [currentPage, setCurrentPage] = useState(page);
 
   // Synchronize document SEO metadata for the blog hub
@@ -38,12 +40,17 @@ export const BlogList: React.FC<BlogListProps> = ({ onNavigate, page = 1 }) => {
     canonical.setAttribute('href', 'https://bgremoverx.com/blog');
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage, selectedCategory]);
+  }, [currentPage, selectedCategory, sortBy]);
 
-  // Filtered posts based on search and category
+  // Filtered and sorted posts based on search, category, and sort order
   const filteredPosts = useMemo(() => {
-    return searchBlogPosts(BLOG_POSTS, searchQuery, selectedCategory);
-  }, [searchQuery, selectedCategory]);
+    const results = searchBlogPosts(BLOG_POSTS, searchQuery, selectedCategory);
+    return [...results].sort((a, b) => {
+      const dateA = new Date(a.publishedDate).getTime();
+      const dateB = new Date(b.publishedDate).getTime();
+      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+  }, [searchQuery, selectedCategory, sortBy]);
 
   // Featured post (always the top article when on first page with no search)
   const isDefaultView = searchQuery === '' && selectedCategory === 'All' && currentPage === 1;
@@ -142,10 +149,37 @@ export const BlogList: React.FC<BlogListProps> = ({ onNavigate, page = 1 }) => {
               )}
             </div>
 
-            {/* Results Count */}
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <Filter className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Showing {filteredPosts.length} {filteredPosts.length === 1 ? 'Article' : 'Articles'}</span>
+            {/* Sort & Results Count */}
+            <div className="flex items-center gap-3 justify-between md:justify-end">
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-indigo-500" />
+                <span>{filteredPosts.length} {filteredPosts.length === 1 ? 'Article' : 'Articles'}</span>
+              </div>
+
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSortBy('newest')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                    sortBy === 'newest'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  Newest
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSortBy('oldest')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                    sortBy === 'oldest'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  Oldest
+                </button>
+              </div>
             </div>
           </div>
 
@@ -249,6 +283,49 @@ export const BlogList: React.FC<BlogListProps> = ({ onNavigate, page = 1 }) => {
             </button>
           </div>
         )}
+
+        {/* Subscribe to our Blog Newsletter Signup */}
+        <div className="mb-10">
+          <BlogNewsletterSignup
+            variant="card"
+            idPrefix="blog-list-newsletter"
+            sourceContext="blog-list"
+          />
+        </div>
+
+        {/* Facebook Page Community Banner */}
+        <div className="mb-14 rounded-3xl bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-200/80 dark:border-blue-900/60 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div className="flex items-center gap-4 text-center sm:text-left">
+            <div className="w-12 h-12 rounded-2xl bg-[#1877F2] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+              <Facebook className="w-6 h-6 fill-current" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 justify-center sm:justify-start">
+                <h3 className="font-display font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+                  Join the BGRemoverX Community on Facebook
+                </h3>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-[#1877F2] dark:bg-blue-950 dark:text-blue-300">
+                  Official
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Follow <span className="font-semibold text-[#1877F2]">@bgremoverx</span> for weekly photo editing tips, product news, and direct support.
+              </p>
+            </div>
+          </div>
+
+          <a
+            href="https://www.facebook.com/bgremoverx"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Follow BGRemoverX on Facebook: https://www.facebook.com/bgremoverx"
+            className="px-5 py-2.5 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] active:scale-98 text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-600/20 flex items-center gap-2 shrink-0 group cursor-pointer"
+          >
+            <Facebook className="w-4 h-4 fill-current transition-transform group-hover:scale-110" />
+            <span>Follow @bgremoverx</span>
+            <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+          </a>
+        </div>
 
         {/* Bottom Blog CTA: Background Remover Tool */}
         <div className="rounded-3xl bg-gradient-to-tr from-indigo-900 via-indigo-950 to-slate-950 border border-indigo-800/60 p-8 sm:p-12 text-center text-white relative overflow-hidden shadow-xl">

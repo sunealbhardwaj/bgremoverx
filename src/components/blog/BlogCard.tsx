@@ -14,6 +14,8 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post, onNavigate, featured =
     onNavigate(`/blog/${post.slug}`);
   };
 
+  const isNew = new Date(post.publishedDate).getTime() >= new Date('2026-09-20').getTime();
+
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'Background Removal':
@@ -47,10 +49,15 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post, onNavigate, featured =
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           />
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 flex items-center gap-2">
             <span className="px-3 py-1 text-xs font-bold rounded-full bg-black/70 backdrop-blur-md text-white shadow-xs">
               Featured Article
             </span>
+            {isNew && (
+              <span className="px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider rounded-full bg-emerald-600 text-white shadow-xs">
+                New
+              </span>
+            )}
           </div>
         </div>
 
@@ -107,10 +114,15 @@ export const BlogCard: React.FC<BlogCardProps> = ({ post, onNavigate, featured =
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           />
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 flex items-center gap-1.5">
             <span className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full border backdrop-blur-md shadow-xs ${getCategoryColor(post.category)}`}>
               {post.category}
             </span>
+            {isNew && (
+              <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-full bg-emerald-600 text-white shadow-xs">
+                New
+              </span>
+            )}
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Shield, Heart, Github, Twitter, Linkedin, Zap, BookOpen, ArrowRight, ExternalLink } from 'lucide-react';
+import { Sparkles, Shield, Heart, Github, Twitter, Linkedin, Facebook, Zap, BookOpen, ArrowRight, ExternalLink } from 'lucide-react';
 import { LegalModalType } from './LegalModals';
 
 export const Footer: React.FC<{ 
@@ -37,16 +37,29 @@ export const Footer: React.FC<{
               <span>All Neural Processing Systems Operational</span>
             </div>
 
-            {/* Prominent Blog Callout Link */}
-            <div className="pt-2">
+            {/* Prominent Blog Callout & Facebook Page */}
+            <div className="pt-2 flex flex-col sm:flex-row flex-wrap items-start gap-2.5">
               <button
                 onClick={() => onNavigate('/blog')}
                 className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-all font-semibold cursor-pointer shadow-xs"
               >
                 <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>Visit BGRemoverX Blog & Guides</span>
-                <ArrowRight className="w-3 h-3 ml-1" />
+                <span>Blog & Guides</span>
+                <ArrowRight className="w-3 h-3 ml-0.5" />
               </button>
+
+              <a
+                href="https://www.facebook.com/bgremoverx"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Official BgRemoverX Facebook Page"
+                title="Follow BgRemoverX on Facebook"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 transition-all font-semibold cursor-pointer shadow-xs group"
+              >
+                <Facebook className="w-3.5 h-3.5 text-[#1877F2] fill-current transition-transform group-hover:scale-110" />
+                <span>Facebook @bgremoverx</span>
+                <ExternalLink className="w-3 h-3 opacity-60 ml-0.5 group-hover:opacity-100" />
+              </a>
             </div>
           </div>
 
@@ -207,6 +220,19 @@ export const Footer: React.FC<{
                 </button>
               </li>
               <li>
+                <a
+                  href="https://www.facebook.com/bgremoverx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#1877F2] dark:hover:text-[#1877F2] transition-colors flex items-center gap-1.5 text-left font-medium"
+                  aria-label="Official Facebook Page"
+                >
+                  <Facebook className="w-3.5 h-3.5 text-[#1877F2] fill-current" />
+                  <span>Facebook (@bgremoverx)</span>
+                  <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                </a>
+              </li>
+              <li>
                 <button
                   onClick={() => onOpenLegalModal('contact')}
                   className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left"
@@ -255,6 +281,18 @@ export const Footer: React.FC<{
         <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-[11px]">
           <p>© 2026 BgRemoverX Technologies Inc. All rights reserved.</p>
           <div className="flex flex-wrap items-center gap-4">
+            <a
+              href="https://www.facebook.com/bgremoverx"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Official Facebook Page: @bgremoverx"
+              title="Official Facebook Page"
+              className="flex items-center gap-1.5 text-slate-500 hover:text-[#1877F2] dark:hover:text-[#1877F2] transition-colors font-medium"
+            >
+              <Facebook className="w-3.5 h-3.5 text-[#1877F2] fill-current" />
+              <span>Facebook</span>
+            </a>
+            <span>•</span>
             <button
               onClick={() => onOpenLegalModal('privacy')}
               className="hover:underline"

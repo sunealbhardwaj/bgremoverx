@@ -190,4 +190,64 @@
     </image:image>
   </url>
 
+  <!-- Blog 16: How to Remove Background from Hair Without Losing Fine Details -->
+  <url>
+    <loc>https://bgremoverx.com/blog/remove-background-from-hair</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&amp;fit=crop&amp;w=1200&amp;h=630&amp;q=80</image:loc>
+      <image:title>How to Remove Background from Hair Without Losing Fine Details</image:title>
+    </image:image>
+  </url>
+
+  <!-- Blog 17: How to Remove Background from Clothes and Fashion Photos -->
+  <url>
+    <loc>https://bgremoverx.com/blog/remove-background-from-clothes</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&amp;fit=crop&amp;w=1200&amp;h=630&amp;q=80</image:loc>
+      <image:title>How to Remove Background from Clothes and Fashion Photos</image:title>
+    </image:image>
+  </url>
+
+  <!-- Blog 18: How to Make a Passport Size Photo Background Clean and Professional -->
+  <url>
+    <loc>https://bgremoverx.com/blog/passport-photo-background-remover</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&amp;fit=crop&amp;w=1200&amp;h=630&amp;q=80</image:loc>
+      <image:title>How to Make a Passport Size Photo Background Clean and Professional</image:title>
+    </image:image>
+  </url>
+
+  <!-- Blog 19: How to Remove Background from Jewelry Photos and Keep Small Details Clear -->
+  <url>
+    <loc>https://bgremoverx.com/blog/jewelry-background-remover</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&amp;fit=crop&amp;w=1200&amp;h=630&amp;q=80</image:loc>
+      <image:title>How to Remove Background from Jewelry Photos and Keep Small Details Clear</image:title>
+    </image:image>
+  </url>
+
+  <!-- Blog 20: Why Does Background Removal Look Bad? 10 Problems and Simple Fixes -->
+  <url>
+    <loc>https://bgremoverx.com/blog/background-removal-problems-and-fixes</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&amp;fit=crop&amp;w=1200&amp;h=630&amp;q=80</image:loc>
+      <image:title>Why Does Background Removal Look Bad? 10 Problems and Simple Fixes</image:title>
+    </image:image>
+  </url>
+
 </urlset>

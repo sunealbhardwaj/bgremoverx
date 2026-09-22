@@ -18,6 +18,7 @@ import { BlogPost, BlogSection } from '../../types/blog';
 import { getRelatedBlogPosts } from '../../data/blogPosts';
 import { BlogCard } from './BlogCard';
 import { SocialShareButtons } from './SocialShareButtons';
+import { BlogNewsletterSignup } from './BlogNewsletterSignup';
 
 interface BlogPostViewProps {
   post: BlogPost;
@@ -690,6 +691,15 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
               {post.author.bio}
             </p>
           </div>
+        </div>
+
+        {/* Subscribe to our Blog Newsletter Signup */}
+        <div className="mt-14">
+          <BlogNewsletterSignup
+            variant="card"
+            idPrefix={`blog-post-${post.slug}-newsletter`}
+            sourceContext={`blog-post-${post.slug}`}
+          />
         </div>
 
         {/* Bottom Prominent CTA: Try BGRemoverX */}
