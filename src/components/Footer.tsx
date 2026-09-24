@@ -202,6 +202,30 @@ export const Footer: React.FC<{
                   AI Remover vs Photoshop
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/professional-headshot-background-remover')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  Professional Headshot Guide
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/consistent-product-image-backgrounds-ecommerce')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  E-commerce Catalog Standards
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/png-vs-webp-vs-avif-transparent-images')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  PNG vs WebP vs AVIF
+                </button>
+              </li>
             </ul>
           </div>
 
