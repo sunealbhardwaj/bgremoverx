@@ -6,6 +6,9 @@ import { articlesPart4 } from './articlesPart4';
 import { articlesPart5 } from './articlesPart5';
 import { articlesPart6 } from './articlesPart6';
 import { articlesPart7 } from './articlesPart7';
+import { articlesPart8 } from './articlesPart8';
+import { articlesPart9 } from './articlesPart9';
+import { articlesPart10 } from './articlesPart10';
 
 export const BLOG_POSTS: BlogPost[] = [
   ...articlesPart1,
@@ -15,6 +18,9 @@ export const BLOG_POSTS: BlogPost[] = [
   ...articlesPart5,
   ...articlesPart6,
   ...articlesPart7,
+  ...articlesPart8,
+  ...articlesPart9,
+  ...articlesPart10,
 ];
 
 export const BLOG_CATEGORIES: BlogCategory[] = [

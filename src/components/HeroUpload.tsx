@@ -167,17 +167,17 @@ export const HeroUpload: React.FC<HeroUploadProps> = ({
           <span>100% Free AI Background Remover & Remove BG Studio</span>
         </div>
 
-        {/* Compact Headline */}
+        {/* Main H1 Headline */}
         <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-3xl mx-auto leading-tight">
-          Free Background Remover —{' '}
+          Free AI Background Remover Online —{' '}
           <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Remove BG & Cut Out Photos
+            BGRemoverX
           </span>
         </h1>
 
-        {/* Compact Subtitle */}
+        {/* Supporting Subtitle */}
         <p className="mt-2 text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          Fastest AI bg remover to remove background from photos, cut out portraits or products, and bg remove images with sub-pixel edge matting and 4K transparent PNG downloads.
+          Remove image backgrounds online in seconds. Upload any photo to create clean transparent PNGs for product photography, portraits, e-commerce catalogs, and graphic designs.
         </p>
 
         {/* Upload Container */}

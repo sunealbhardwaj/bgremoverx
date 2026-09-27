@@ -220,10 +220,34 @@ export const Footer: React.FC<{
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('/blog/png-vs-webp-vs-avif-transparent-images')}
+                  onClick={() => onNavigate('/blog/ghost-mannequin-background-removal-guide')}
                   className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
                 >
-                  PNG vs WebP vs AVIF
+                  Ghost Mannequin Apparel Guide
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/make-image-background-transparent-on-phone')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  Mobile Phone Removal Guide
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog/prepare-transparent-png-for-printing')}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left cursor-pointer"
+                >
+                  Printing & T-Shirt Guide
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/blog')}
+                  className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline transition-all text-left cursor-pointer flex items-center gap-1 pt-1"
+                >
+                  <span>Explore All 45 Guides →</span>
                 </button>
               </li>
             </ul>

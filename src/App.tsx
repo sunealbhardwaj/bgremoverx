@@ -92,8 +92,8 @@ export const App: React.FC = () => {
       document.title = 'Remove White Background from Image Online - BgRemoverX';
       if (metaDescTag) metaDescTag.setAttribute('content', 'Quickly remove background and solid white backdrops from product photos. Perfect for Amazon, Shopify, and eBay listings.');
     } else {
-      document.title = 'Free Background Remover — Remove BG & Remove Background Online (AI BG Remover)';
-      if (metaDescTag) metaDescTag.setAttribute('content', '100% Free AI background remover and bg remover tool. Easily remove bg, remove background from photos, and bg remove images online in seconds. Download 4K transparent PNGs with no sign-up.');
+      document.title = 'Free AI Background Remover Online | BGRemoverX';
+      if (metaDescTag) metaDescTag.setAttribute('content', 'Remove image backgrounds online with BGRemoverX. Create transparent PNGs for product photos, portraits and designs using our easy-to-use AI tool.');
     }
   }, [currentPath]);
 
