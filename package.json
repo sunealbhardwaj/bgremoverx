@@ -15,7 +15,6 @@
     "@google/genai": "^2.4.0",
     "@imgly/background-removal": "1.4.5",
     "@imgly/background-removal-data": "1.4.5",
-    "@imgly/background-removal-node": "^1.4.5",
     "@tailwindcss/vite": "^4.1.14",
     "@types/jszip": "^3.4.1",
     "@vitejs/plugin-react": "^5.0.4",
@@ -34,11 +33,15 @@
   "devDependencies": {
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.2",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
     "@types/express": "^4.17.21"
+  },
+  "overrides": {
+    "lodash": "^4.18.0",
+    "zod": "^3.22.3"
   }
 }
