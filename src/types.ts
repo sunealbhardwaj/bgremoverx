@@ -127,6 +127,15 @@ export interface OutlineConfig {
 
 export type AspectRatioPreset = 'original' | '1:1' | '9:16' | '16:9' | '4:5' | 'passport_us' | 'passport_eu';
 
+export type CropAspectRatio = 'free' | 'original' | '1:1' | '4:5' | '9:16' | '16:9' | '3:2' | '2:3' | '4:3' | '3:4' | 'passport_us' | 'passport_eu' | 'ecommerce';
+
+export interface CropRect {
+  x: number; // percentage (0 to 100)
+  y: number; // percentage (0 to 100)
+  width: number; // percentage (0 to 100)
+  height: number; // percentage (0 to 100)
+}
+
 export interface EditorState {
   backgroundMode: BackgroundMode;
   solidColor: string;

@@ -3,6 +3,7 @@ import {
   Download, 
   RefreshCw, 
   RotateCcw, 
+  RotateCw,
   ZoomIn, 
   ZoomOut, 
   Maximize2, 
@@ -39,7 +40,13 @@ import {
   ShieldCheck,
   SplitSquareVertical,
   Activity,
-  Filter
+  Filter,
+  Crop,
+  Lock,
+  Unlock,
+  Square,
+  Ratio,
+  Scan
 } from 'lucide-react';
 import { 
   ProcessedImage, 
@@ -53,7 +60,9 @@ import {
   ExportSize,
   ProcessingMode,
   NaturalShadowMode,
-  QualityReport
+  QualityReport,
+  CropAspectRatio,
+  CropRect
 } from '../types';
 import { SOLID_COLOR_PRESETS, GRADIENT_PRESETS, CURATED_BACKDROPS, FILTER_PRESETS, FilterPreset } from '../utils/presets';
 import { renderCompositionToCanvas, downloadExportedImage, getCanvasDimensions } from '../utils/canvasRenderer';
@@ -73,7 +82,7 @@ interface WorkspaceEditorProps {
   darkMode: boolean;
 }
 
-type TabType = 'ai_modes' | 'color' | 'gradient' | 'backdrop' | 'filters' | 'shadow' | 'refine' | 'transform' | 'adjustments' | 'export';
+type TabType = 'ai_modes' | 'crop' | 'color' | 'gradient' | 'backdrop' | 'filters' | 'shadow' | 'refine' | 'transform' | 'adjustments' | 'export';
 type PreviewViewMode = 'split' | 'side-by-side' | 'result-only' | 'original-only';
 type CanvasBackdrop = 'checkered' | 'checkered-dark' | 'white' | 'black' | 'gray';
 
@@ -147,6 +156,21 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
   // Custom Color State
   const [hexInput, setHexInput] = useState<string>('#FFFFFF');
   const [editorToast, setEditorToast] = useState<string | null>(null);
+
+  // Image Cropping & Framing Studio State
+  const [cropRect, setCropRect] = useState<CropRect>({ x: 0, y: 0, width: 100, height: 100 });
+  const [cropAspectRatio, setCropAspectRatio] = useState<CropAspectRatio>('free');
+  const [isLockCropRatio, setIsLockCropRatio] = useState<boolean>(false);
+  const [cropCustomWidthPx, setCropCustomWidthPx] = useState<number>(processedImage.originalWidth);
+  const [cropCustomHeightPx, setCropCustomHeightPx] = useState<number>(processedImage.originalHeight);
+  const [isApplyingCrop, setIsApplyingCrop] = useState<boolean>(false);
+  const [isDetectingSubjectBounds, setIsDetectingSubjectBounds] = useState<boolean>(false);
+  const [activeCropDrag, setActiveCropDrag] = useState<{
+    type: 'move' | 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
+    startX: number;
+    startY: number;
+    initialRect: CropRect;
+  } | null>(null);
 
   const showToast = (msg: string) => {
     setEditorToast(msg);
@@ -226,6 +250,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
   const splitContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
+  const cropContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync prop updates
   useEffect(() => {
@@ -281,6 +306,168 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
       window.removeEventListener('touchcancel', handleWindowDragEnd);
     };
   }, [isDraggingSplit]);
+
+  // Crop Drag & Resize Tracking Effect
+  useEffect(() => {
+    if (!activeCropDrag) return;
+
+    const handleCropPointerMove = (e: PointerEvent) => {
+      if (!cropContainerRef.current) return;
+      const rect = cropContainerRef.current.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      const deltaXPct = ((e.clientX - activeCropDrag.startX) / rect.width) * 100;
+      const deltaYPct = ((e.clientY - activeCropDrag.startY) / rect.height) * 100;
+      const init = activeCropDrag.initialRect;
+      const minPct = 5;
+
+      const imgAspect = currentImage.originalWidth / currentImage.originalHeight;
+
+      let targetRatio = 1.0;
+      if (cropAspectRatio === '1:1' || cropAspectRatio === 'passport_us' || cropAspectRatio === 'ecommerce') targetRatio = 1.0;
+      else if (cropAspectRatio === '4:5') targetRatio = 4 / 5;
+      else if (cropAspectRatio === '9:16') targetRatio = 9 / 16;
+      else if (cropAspectRatio === '16:9') targetRatio = 16 / 9;
+      else if (cropAspectRatio === '3:2') targetRatio = 3 / 2;
+      else if (cropAspectRatio === '2:3') targetRatio = 2 / 3;
+      else if (cropAspectRatio === '4:3') targetRatio = 4 / 3;
+      else if (cropAspectRatio === '3:4') targetRatio = 3 / 4;
+      else if (cropAspectRatio === 'passport_eu') targetRatio = 35 / 45;
+      else if (cropAspectRatio === 'original') targetRatio = imgAspect;
+
+      const isLocked = isLockCropRatio && cropAspectRatio !== 'free';
+
+      setCropRect(() => {
+        let next: CropRect = { ...init };
+
+        if (activeCropDrag.type === 'move') {
+          const maxX = 100 - init.width;
+          const maxY = 100 - init.height;
+          next.x = Math.max(0, Math.min(maxX, init.x + deltaXPct));
+          next.y = Math.max(0, Math.min(maxY, init.y + deltaYPct));
+          return next;
+        }
+
+        if (activeCropDrag.type === 'se') {
+          let newW = Math.max(minPct, Math.min(100 - init.x, init.width + deltaXPct));
+          let newH = Math.max(minPct, Math.min(100 - init.y, init.height + deltaYPct));
+          if (isLocked) {
+            newH = (newW * imgAspect) / targetRatio;
+            if (init.y + newH > 100) {
+              newH = 100 - init.y;
+              newW = (newH * targetRatio) / imgAspect;
+            }
+          }
+          next.width = newW;
+          next.height = newH;
+        } else if (activeCropDrag.type === 's') {
+          let newH = Math.max(minPct, Math.min(100 - init.y, init.height + deltaYPct));
+          next.height = newH;
+          if (isLocked) {
+            let newW = (newH * targetRatio) / imgAspect;
+            if (init.x + newW > 100) {
+              newW = 100 - init.x;
+            }
+            next.width = newW;
+          }
+        } else if (activeCropDrag.type === 'e') {
+          let newW = Math.max(minPct, Math.min(100 - init.x, init.width + deltaXPct));
+          next.width = newW;
+          if (isLocked) {
+            let newH = (newW * imgAspect) / targetRatio;
+            if (init.y + newH > 100) {
+              newH = 100 - init.y;
+            }
+            next.height = newH;
+          }
+        } else if (activeCropDrag.type === 'nw') {
+          let newX = Math.max(0, Math.min(init.x + init.width - minPct, init.x + deltaXPct));
+          let newW = init.x + init.width - newX;
+          let newY = Math.max(0, Math.min(init.y + init.height - minPct, init.y + deltaYPct));
+          let newH = init.y + init.height - newY;
+          if (isLocked) {
+            newH = (newW * imgAspect) / targetRatio;
+            newY = init.y + init.height - newH;
+            if (newY < 0) {
+              newY = 0;
+              newH = init.y + init.height;
+              newW = (newH * targetRatio) / imgAspect;
+              newX = init.x + init.width - newW;
+            }
+          }
+          next.x = newX;
+          next.y = newY;
+          next.width = newW;
+          next.height = newH;
+        } else if (activeCropDrag.type === 'ne') {
+          let newW = Math.max(minPct, Math.min(100 - init.x, init.width + deltaXPct));
+          let newY = Math.max(0, Math.min(init.y + init.height - minPct, init.y + deltaYPct));
+          let newH = init.y + init.height - newY;
+          if (isLocked) {
+            newH = (newW * imgAspect) / targetRatio;
+            newY = init.y + init.height - newH;
+            if (newY < 0) {
+              newY = 0;
+              newH = init.y + init.height;
+              newW = (newH * targetRatio) / imgAspect;
+            }
+          }
+          next.y = newY;
+          next.width = newW;
+          next.height = newH;
+        } else if (activeCropDrag.type === 'sw') {
+          let newX = Math.max(0, Math.min(init.x + init.width - minPct, init.x + deltaXPct));
+          let newW = init.x + init.width - newX;
+          let newH = Math.max(minPct, Math.min(100 - init.y, init.height + deltaYPct));
+          if (isLocked) {
+            newH = (newW * imgAspect) / targetRatio;
+            if (init.y + newH > 100) {
+              newH = 100 - init.y;
+              newW = (newH * targetRatio) / imgAspect;
+              newX = init.x + init.width - newW;
+            }
+          }
+          next.x = newX;
+          next.width = newW;
+          next.height = newH;
+        } else if (activeCropDrag.type === 'n') {
+          let newY = Math.max(0, Math.min(init.y + init.height - minPct, init.y + deltaYPct));
+          let newH = init.y + init.height - newY;
+          next.y = newY;
+          next.height = newH;
+          if (isLocked) {
+            let newW = (newH * targetRatio) / imgAspect;
+            next.width = Math.min(100 - init.x, newW);
+          }
+        } else if (activeCropDrag.type === 'w') {
+          let newX = Math.max(0, Math.min(init.x + init.width - minPct, init.x + deltaXPct));
+          let newW = init.x + init.width - newX;
+          next.x = newX;
+          next.width = newW;
+          if (isLocked) {
+            let newH = (newW * imgAspect) / targetRatio;
+            next.height = Math.min(100 - init.y, newH);
+          }
+        }
+
+        return next;
+      });
+    };
+
+    const handleCropPointerUp = () => {
+      setActiveCropDrag(null);
+    };
+
+    window.addEventListener('pointermove', handleCropPointerMove);
+    window.addEventListener('pointerup', handleCropPointerUp);
+    window.addEventListener('pointercancel', handleCropPointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handleCropPointerMove);
+      window.removeEventListener('pointerup', handleCropPointerUp);
+      window.removeEventListener('pointercancel', handleCropPointerUp);
+    };
+  }, [activeCropDrag, isLockCropRatio, cropAspectRatio, currentImage]);
 
   // Main Canvas Render
   const updateCanvas = useCallback(async () => {
@@ -798,6 +985,382 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
     }
   };
 
+  // Crop Preset Options
+  const CROP_RATIO_PRESETS: {
+    id: CropAspectRatio;
+    name: string;
+    label: string;
+    sublabel: string;
+    ratio?: number;
+    category: 'standard' | 'social' | 'document';
+    iconName?: string;
+  }[] = [
+    { id: 'free', name: 'Freeform', label: 'Custom', sublabel: 'Drag handles freely', category: 'standard' },
+    { id: 'original', name: 'Original', label: 'Image Ratio', sublabel: 'Maintain native proportions', category: 'standard' },
+    { id: '1:1', name: '1:1 Square', label: 'Square', sublabel: 'Instagram, Avatar, Amazon', ratio: 1.0, category: 'social' },
+    { id: '4:5', name: '4:5 Portrait', label: 'Portrait', sublabel: 'Instagram Feed Post', ratio: 4 / 5, category: 'social' },
+    { id: '9:16', name: '9:16 Story', label: 'Vertical', sublabel: 'TikTok, Reels, Shorts', ratio: 9 / 16, category: 'social' },
+    { id: '16:9', name: '16:9 Cinema', label: 'Widescreen', sublabel: 'YouTube, Web Banner', ratio: 16 / 9, category: 'social' },
+    { id: '3:2', name: '3:2 Classic', label: '3:2 Photo', sublabel: 'Standard 35mm DSLR', ratio: 3 / 2, category: 'standard' },
+    { id: '2:3', name: '2:3 Vertical', label: '2:3 Poster', sublabel: 'Pinterest, Print Poster', ratio: 2 / 3, category: 'standard' },
+    { id: '4:3', name: '4:3 Standard', label: '4:3 Display', sublabel: 'Classic photo, iPad', ratio: 4 / 3, category: 'standard' },
+    { id: '3:4', name: '3:4 Portrait', label: '3:4 Photo', sublabel: 'Standard vertical photo', ratio: 3 / 4, category: 'standard' },
+    { id: 'passport_us', name: 'US Passport', label: '2×2 in (1:1)', sublabel: 'US Government & Visa', ratio: 1.0, category: 'document' },
+    { id: 'passport_eu', name: 'EU Schengen', label: '35×45 mm', sublabel: 'EU / UK / Schengen Visa', ratio: 35 / 45, category: 'document' },
+    { id: 'ecommerce', name: 'Amazon / Shop', label: 'Product Hero', sublabel: '1:1 Centered product frame', ratio: 1.0, category: 'document' },
+  ];
+
+  // Set Aspect Ratio Preset
+  const handleCropAspectRatioChange = (ratioId: CropAspectRatio) => {
+    setCropAspectRatio(ratioId);
+
+    if (ratioId === 'free') {
+      setIsLockCropRatio(false);
+      return;
+    }
+
+    const imgAspect = currentImage.originalWidth / currentImage.originalHeight;
+    let targetRatio = imgAspect;
+
+    if (ratioId === '1:1' || ratioId === 'passport_us' || ratioId === 'ecommerce') {
+      targetRatio = 1.0;
+    } else if (ratioId === '4:5') {
+      targetRatio = 4 / 5;
+    } else if (ratioId === '9:16') {
+      targetRatio = 9 / 16;
+    } else if (ratioId === '16:9') {
+      targetRatio = 16 / 9;
+    } else if (ratioId === '3:2') {
+      targetRatio = 3 / 2;
+    } else if (ratioId === '2:3') {
+      targetRatio = 2 / 3;
+    } else if (ratioId === '4:3') {
+      targetRatio = 4 / 3;
+    } else if (ratioId === '3:4') {
+      targetRatio = 3 / 4;
+    } else if (ratioId === 'passport_eu') {
+      targetRatio = 35 / 45;
+    } else if (ratioId === 'original') {
+      targetRatio = imgAspect;
+    }
+
+    let newW = 100;
+    let newH = 100;
+    let newX = 0;
+    let newY = 0;
+
+    if (imgAspect > targetRatio) {
+      // Wider than target ratio: crop width
+      newW = Math.max(5, Math.min(100, (100 * targetRatio) / imgAspect));
+      newX = (100 - newW) / 2;
+    } else {
+      // Taller than target ratio: crop height
+      newH = Math.max(5, Math.min(100, (100 * imgAspect) / targetRatio));
+      newY = (100 - newH) / 2;
+    }
+
+    setCropRect({
+      x: Math.round(newX * 10) / 10,
+      y: Math.round(newY * 10) / 10,
+      width: Math.round(newW * 10) / 10,
+      height: Math.round(newH * 10) / 10,
+    });
+    setIsLockCropRatio(true);
+  };
+
+  // 1-Click Smart Subject Auto-Fit & Framing
+  const handleAutoFitSubject = async (paddingPercent: number = 10, forceRatio?: number) => {
+    setIsDetectingSubjectBounds(true);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = currentImage.originalWidth;
+      canvas.height = currentImage.originalHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
+
+      const img = await loadImage(currentImage.cutoutUrl);
+      ctx.drawImage(img, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      let minX = canvas.width;
+      let minY = canvas.height;
+      let maxX = 0;
+      let maxY = 0;
+      let hasSubject = false;
+
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const a = data[(y * canvas.width + x) * 4 + 3];
+          if (a > 15) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            hasSubject = true;
+          }
+        }
+      }
+
+      if (!hasSubject) {
+        showToast('No cutout subject detected to auto-fit.');
+        return;
+      }
+
+      const subW = maxX - minX;
+      const subH = maxY - minY;
+
+      // Apply margin padding
+      const padX = Math.round(subW * (paddingPercent / 100));
+      const padY = Math.round(subH * (paddingPercent / 100));
+
+      let cropX1 = Math.max(0, minX - padX);
+      let cropY1 = Math.max(0, minY - padY);
+      let cropX2 = Math.min(canvas.width, maxX + padX);
+      let cropY2 = Math.min(canvas.height, maxY + padY);
+
+      if (forceRatio) {
+        const currentW = cropX2 - cropX1;
+        const currentH = cropY2 - cropY1;
+        const currentRatio = currentW / currentH;
+
+        if (currentRatio < forceRatio) {
+          const desiredW = Math.round(currentH * forceRatio);
+          const diff = desiredW - currentW;
+          cropX1 = Math.max(0, cropX1 - Math.floor(diff / 2));
+          cropX2 = Math.min(canvas.width, cropX1 + desiredW);
+          if (cropX2 === canvas.width) {
+            cropX1 = Math.max(0, canvas.width - desiredW);
+          }
+        } else {
+          const desiredH = Math.round(currentW / forceRatio);
+          const diff = desiredH - currentH;
+          cropY1 = Math.max(0, cropY1 - Math.floor(diff / 2));
+          cropY2 = Math.min(canvas.height, cropY1 + desiredH);
+          if (cropY2 === canvas.height) {
+            cropY1 = Math.max(0, canvas.height - desiredH);
+          }
+        }
+      }
+
+      const finalW = cropX2 - cropX1;
+      const finalH = cropY2 - cropY1;
+
+      const newRect: CropRect = {
+        x: (cropX1 / canvas.width) * 100,
+        y: (cropY1 / canvas.height) * 100,
+        width: (finalW / canvas.width) * 100,
+        height: (finalH / canvas.height) * 100,
+      };
+
+      setCropRect(newRect);
+      showToast(`AI Auto-Framed to Subject (${finalW} × ${finalH} px)`);
+    } catch (err) {
+      console.error('Auto fit error:', err);
+    } finally {
+      setIsDetectingSubjectBounds(false);
+    }
+  };
+
+  // Start Handle Drag
+  const handleCropHandleStart = (
+    e: React.PointerEvent,
+    type: 'move' | 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
+  ) => {
+    e.stopPropagation();
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch (_) {}
+    setActiveCropDrag({
+      type,
+      startX: e.clientX,
+      startY: e.clientY,
+      initialRect: { ...cropRect },
+    });
+  };
+
+  // Apply Crop to Canvas & Subject
+  const handleApplyCrop = async () => {
+    setIsApplyingCrop(true);
+    try {
+      const srcX = Math.max(0, Math.round((cropRect.x / 100) * currentImage.originalWidth));
+      const srcY = Math.max(0, Math.round((cropRect.y / 100) * currentImage.originalHeight));
+      const srcW = Math.max(10, Math.min(currentImage.originalWidth - srcX, Math.round((cropRect.width / 100) * currentImage.originalWidth)));
+      const srcH = Math.max(10, Math.min(currentImage.originalHeight - srcY, Math.round((cropRect.height / 100) * currentImage.originalHeight)));
+
+      // 1. Crop Cutout Canvas
+      const cutoutCanvas = document.createElement('canvas');
+      cutoutCanvas.width = srcW;
+      cutoutCanvas.height = srcH;
+      const cCtx = cutoutCanvas.getContext('2d');
+      if (!cCtx) return;
+
+      cCtx.imageSmoothingEnabled = true;
+      cCtx.imageSmoothingQuality = 'high';
+
+      const cutoutImg = await loadImage(currentImage.cutoutUrl);
+      cCtx.drawImage(cutoutImg, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+      const newCutoutUrl = cutoutCanvas.toDataURL('image/png');
+
+      // 2. Crop Original Image Canvas for before/after comparison
+      let newOriginalUrl = currentImage.originalUrl;
+      try {
+        const origCanvas = document.createElement('canvas');
+        origCanvas.width = srcW;
+        origCanvas.height = srcH;
+        const oCtx = origCanvas.getContext('2d');
+        if (oCtx) {
+          oCtx.imageSmoothingEnabled = true;
+          oCtx.imageSmoothingQuality = 'high';
+          const origImg = await loadImage(currentImage.originalUrl);
+          oCtx.drawImage(origImg, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+          newOriginalUrl = origCanvas.toDataURL('image/png');
+        }
+      } catch (e) {
+        console.warn('Original image crop fallback:', e);
+      }
+
+      // 3. Update ProcessedImage
+      const updatedImage: ProcessedImage = {
+        ...currentImage,
+        originalWidth: srcW,
+        originalHeight: srcH,
+        cutoutUrl: newCutoutUrl,
+        originalUrl: newOriginalUrl,
+      };
+
+      setCurrentImage(updatedImage);
+      setUndoStack((prev) => [...prev, newCutoutUrl]);
+      setRedoStack([]);
+      
+      // Reset crop rect to full bounds of the new cropped image
+      setCropRect({ x: 0, y: 0, width: 100, height: 100 });
+      setCropAspectRatio('free');
+      setIsLockCropRatio(false);
+      setCropCustomWidthPx(srcW);
+      setCropCustomHeightPx(srcH);
+
+      showToast(`Subject framed & cropped! Canvas size: ${srcW} × ${srcH} px`);
+    } catch (err: any) {
+      console.error('Apply crop failed:', err);
+      showToast('Failed to apply crop: ' + (err?.message || 'unknown error'));
+    } finally {
+      setIsApplyingCrop(false);
+    }
+  };
+
+  // Reset Crop to full frame
+  const handleResetCrop = () => {
+    setCropRect({ x: 0, y: 0, width: 100, height: 100 });
+    setCropAspectRatio('free');
+    setIsLockCropRatio(false);
+    showToast('Crop frame reset to 100% full image');
+  };
+
+  // Rotate Image 90° Clockwise or Counter-Clockwise
+  const handleRotateImage90 = async (clockwise: boolean = true) => {
+    try {
+      const origW = currentImage.originalWidth;
+      const origH = currentImage.originalHeight;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = origH;
+      canvas.height = origW;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const cutoutImg = await loadImage(currentImage.cutoutUrl);
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((clockwise ? 90 : -90) * (Math.PI / 180));
+      ctx.drawImage(cutoutImg, -origW / 2, -origH / 2);
+      const newCutoutUrl = canvas.toDataURL('image/png');
+
+      let newOriginalUrl = currentImage.originalUrl;
+      try {
+        const origCanvas = document.createElement('canvas');
+        origCanvas.width = origH;
+        origCanvas.height = origW;
+        const oCtx = origCanvas.getContext('2d');
+        if (oCtx) {
+          const origImg = await loadImage(currentImage.originalUrl);
+          oCtx.translate(origCanvas.width / 2, origCanvas.height / 2);
+          oCtx.rotate((clockwise ? 90 : -90) * (Math.PI / 180));
+          oCtx.drawImage(origImg, -origW / 2, -origH / 2);
+          newOriginalUrl = origCanvas.toDataURL('image/png');
+        }
+      } catch (_) {}
+
+      const updatedImage: ProcessedImage = {
+        ...currentImage,
+        originalWidth: origH,
+        originalHeight: origW,
+        cutoutUrl: newCutoutUrl,
+        originalUrl: newOriginalUrl,
+      };
+
+      setCurrentImage(updatedImage);
+      setUndoStack((prev) => [...prev, newCutoutUrl]);
+      setRedoStack([]);
+      setCropRect({ x: 0, y: 0, width: 100, height: 100 });
+      showToast(`Rotated ${clockwise ? '90° Clockwise' : '90° Counter-Clockwise'}`);
+    } catch (err) {
+      console.error('Rotate error:', err);
+    }
+  };
+
+  // Flip Cutout Image Permanently
+  const handleFlipImageOrientation = async (horizontal: boolean) => {
+    try {
+      const origW = currentImage.originalWidth;
+      const origH = currentImage.originalHeight;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = origW;
+      canvas.height = origH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const cutoutImg = await loadImage(currentImage.cutoutUrl);
+      ctx.save();
+      ctx.translate(horizontal ? origW : 0, !horizontal ? origH : 0);
+      ctx.scale(horizontal ? -1 : 1, !horizontal ? -1 : 1);
+      ctx.drawImage(cutoutImg, 0, 0);
+      ctx.restore();
+      const newCutoutUrl = canvas.toDataURL('image/png');
+
+      let newOriginalUrl = currentImage.originalUrl;
+      try {
+        const origCanvas = document.createElement('canvas');
+        origCanvas.width = origW;
+        origCanvas.height = origH;
+        const oCtx = origCanvas.getContext('2d');
+        if (oCtx) {
+          const origImg = await loadImage(currentImage.originalUrl);
+          oCtx.save();
+          oCtx.translate(horizontal ? origW : 0, !horizontal ? origH : 0);
+          oCtx.scale(horizontal ? -1 : 1, !horizontal ? -1 : 1);
+          oCtx.drawImage(origImg, 0, 0);
+          oCtx.restore();
+          newOriginalUrl = origCanvas.toDataURL('image/png');
+        }
+      } catch (_) {}
+
+      const updatedImage: ProcessedImage = {
+        ...currentImage,
+        cutoutUrl: newCutoutUrl,
+        originalUrl: newOriginalUrl,
+      };
+
+      setCurrentImage(updatedImage);
+      setUndoStack((prev) => [...prev, newCutoutUrl]);
+      setRedoStack([]);
+      showToast(`Flipped ${horizontal ? 'Horizontally' : 'Vertically'}`);
+    } catch (err) {
+      console.error('Flip error:', err);
+    }
+  };
+
   // Mode descriptions helper
   const MODE_INFO: Record<ProcessingMode, { name: string; desc: string; badge: string; icon: string }> = {
     hd: {
@@ -960,7 +1523,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               <button
                 onClick={() => setViewMode('split')}
                 className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 font-semibold ${
-                  viewMode === 'split'
+                  viewMode === 'split' && activeTab !== 'crop'
                     ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
                     : 'hover:text-slate-900 dark:hover:text-white'
                 }`}
@@ -973,7 +1536,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               <button
                 onClick={() => setViewMode('side-by-side')}
                 className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 font-semibold ${
-                  viewMode === 'side-by-side'
+                  viewMode === 'side-by-side' && activeTab !== 'crop'
                     ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
                     : 'hover:text-slate-900 dark:hover:text-white'
                 }`}
@@ -986,7 +1549,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               <button
                 onClick={() => setViewMode('result-only')}
                 className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 font-semibold ${
-                  viewMode === 'result-only'
+                  viewMode === 'result-only' && activeTab !== 'crop'
                     ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
                     : 'hover:text-slate-900 dark:hover:text-white'
                 }`}
@@ -999,7 +1562,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               <button
                 onClick={() => setViewMode('original-only')}
                 className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 font-semibold ${
-                  viewMode === 'original-only'
+                  viewMode === 'original-only' && activeTab !== 'crop'
                     ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
                     : 'hover:text-slate-900 dark:hover:text-white'
                 }`}
@@ -1007,6 +1570,28 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               >
                 <ImageIcon className="w-3.5 h-3.5" />
                 <span>Original</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (activeTab === 'crop') {
+                    setActiveTab('ai_modes');
+                  } else {
+                    setActiveTab('crop');
+                    if (viewMode !== 'result-only') {
+                      setViewMode('result-only');
+                    }
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 font-semibold ${
+                  activeTab === 'crop'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'hover:text-slate-900 dark:hover:text-white'
+                }`}
+                title="Crop & Frame Subject"
+              >
+                <Crop className="w-3.5 h-3.5" />
+                <span>Crop Frame</span>
               </button>
             </div>
 
@@ -1260,13 +1845,129 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                 <canvas ref={originalCanvasRef} className="max-w-full max-h-[520px] object-contain shadow-2xl rounded-sm" />
               </div>
             ) : (
-              /* Cutout Result Only (Default Canvas) */
+              /* Cutout Result Only (Default Canvas with Cropping Support) */
               <div
+                className="relative inline-flex items-center justify-center max-w-full"
                 style={{
                   transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
                 }}
               >
-                <canvas ref={compositionCanvasRef} className="max-w-full max-h-[520px] object-contain shadow-2xl rounded-sm" />
+                <canvas ref={compositionCanvasRef} className="max-w-full max-h-[520px] object-contain shadow-2xl rounded-sm block" />
+
+                {/* Interactive Crop & Subject Framing Overlay */}
+                {activeTab === 'crop' && (
+                  <div
+                    ref={cropContainerRef}
+                    className="absolute inset-0 z-30 select-none touch-none overflow-visible pointer-events-auto"
+                  >
+                    {/* Outside Dark Scrims */}
+                    {/* Top Scrim */}
+                    <div
+                      className="absolute top-0 left-0 right-0 bg-slate-950/75 pointer-events-none transition-all duration-75"
+                      style={{ height: `${cropRect.y}%` }}
+                    />
+                    {/* Bottom Scrim */}
+                    <div
+                      className="absolute left-0 right-0 bottom-0 bg-slate-950/75 pointer-events-none transition-all duration-75"
+                      style={{ top: `${cropRect.y + cropRect.height}%` }}
+                    />
+                    {/* Left Scrim */}
+                    <div
+                      className="absolute left-0 bg-slate-950/75 pointer-events-none transition-all duration-75"
+                      style={{
+                        top: `${cropRect.y}%`,
+                        height: `${cropRect.height}%`,
+                        width: `${cropRect.x}%`,
+                      }}
+                    />
+                    {/* Right Scrim */}
+                    <div
+                      className="absolute right-0 bg-slate-950/75 pointer-events-none transition-all duration-75"
+                      style={{
+                        top: `${cropRect.y}%`,
+                        height: `${cropRect.height}%`,
+                        left: `${cropRect.x + cropRect.width}%`,
+                      }}
+                    />
+
+                    {/* Active Draggable Resizable Crop Box */}
+                    <div
+                      className="absolute border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.7),0_8px_32px_rgba(0,0,0,0.6)] cursor-move transition-all duration-75"
+                      style={{
+                        left: `${cropRect.x}%`,
+                        top: `${cropRect.y}%`,
+                        width: `${cropRect.width}%`,
+                        height: `${cropRect.height}%`,
+                      }}
+                      onPointerDown={(e) => handleCropHandleStart(e, 'move')}
+                    >
+                      {/* 3x3 Rule of Thirds Grid Lines */}
+                      <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-80">
+                        <div className="border-r border-b border-white/40 shadow-xs" />
+                        <div className="border-r border-b border-white/40 shadow-xs" />
+                        <div className="border-b border-white/40 shadow-xs" />
+                        <div className="border-r border-b border-white/40 shadow-xs" />
+                        <div className="border-r border-b border-white/40 shadow-xs" />
+                        <div className="border-b border-white/40 shadow-xs" />
+                        <div className="border-r border-b border-white/40 shadow-xs" />
+                        <div className="border-r border-b border-white/40 shadow-xs" />
+                        <div className="" />
+                      </div>
+
+                      {/* Real-time Dimensions Badge */}
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-slate-950/95 text-white text-[10px] font-mono font-bold tracking-tight shadow-xl border border-white/20 whitespace-nowrap pointer-events-none flex items-center gap-1.5 z-20">
+                        <Crop className="w-3 h-3 text-indigo-400" />
+                        <span>{Math.round((cropRect.width / 100) * currentImage.originalWidth)} × {Math.round((cropRect.height / 100) * currentImage.originalHeight)} px</span>
+                        <span className="text-indigo-400 font-semibold">• {cropAspectRatio.toUpperCase()}</span>
+                      </div>
+
+                      {/* 8 Resize Grab Handles */}
+                      {/* Corner Handles */}
+                      <div
+                        className="absolute -top-2.5 -left-2.5 w-5 h-5 rounded-full bg-white border-2 border-indigo-600 shadow-lg cursor-nwse-resize hover:scale-125 active:scale-95 transition-transform z-10"
+                        onPointerDown={(e) => handleCropHandleStart(e, 'nw')}
+                        title="Resize Top-Left"
+                      />
+                      <div
+                        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-white border-2 border-indigo-600 shadow-lg cursor-nesw-resize hover:scale-125 active:scale-95 transition-transform z-10"
+                        onPointerDown={(e) => handleCropHandleStart(e, 'ne')}
+                        title="Resize Top-Right"
+                      />
+                      <div
+                        className="absolute -bottom-2.5 -right-2.5 w-5 h-5 rounded-full bg-white border-2 border-indigo-600 shadow-lg cursor-nwse-resize hover:scale-125 active:scale-95 transition-transform z-10"
+                        onPointerDown={(e) => handleCropHandleStart(e, 'se')}
+                        title="Resize Bottom-Right"
+                      />
+                      <div
+                        className="absolute -bottom-2.5 -left-2.5 w-5 h-5 rounded-full bg-white border-2 border-indigo-600 shadow-lg cursor-nesw-resize hover:scale-125 active:scale-95 transition-transform z-10"
+                        onPointerDown={(e) => handleCropHandleStart(e, 'sw')}
+                        title="Resize Bottom-Left"
+                      />
+
+                      {/* Edge Pill Handles */}
+                      <div
+                        className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-8 h-3 rounded-full bg-white border-2 border-indigo-600 shadow-lg cursor-ns-resize hover:scale-110 active:scale-95 transition-transform z-10"
+                        onPointerDown={(e) => handleCropHandleStart(e, 'n')}
+                        title="Resize Top"
+                      />
+                      <div
+                        className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-8 h-3 rounded-full bg-white border-2 border-indigo-600 shadow-lg cursor-ns-resize hover:scale-110 active:scale-95 transition-transform z-10"
+                        onPointerDown={(e) => handleCropHandleStart(e, 's')}
+                        title="Resize Bottom"
+                      />
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-8 rounded-full bg-white border-2 border-indigo-600 shadow-lg cursor-ew-resize hover:scale-110 active:scale-95 transition-transform z-10"
+                        onPointerDown={(e) => handleCropHandleStart(e, 'w')}
+                        title="Resize Left"
+                      />
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-8 rounded-full bg-white border-2 border-indigo-600 shadow-lg cursor-ew-resize hover:scale-110 active:scale-95 transition-transform z-10"
+                        onPointerDown={(e) => handleCropHandleStart(e, 'e')}
+                        title="Resize Right"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1408,8 +2109,8 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
 
         {/* ===================== CONTROL STUDIO SIDEBAR (4 COLS) ===================== */}
         <div className="lg:col-span-4 flex flex-col gap-4">
-          {/* Main Tab Navigation Pill Bar */}
-          <div className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">
+          {/* Main Tab Navigation Pill Bar (6 Tools) */}
+          <div className="grid grid-cols-6 gap-1 p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm text-[11px] font-semibold">
             <button
               onClick={() => setActiveTab('ai_modes')}
               className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 ${
@@ -1419,7 +2120,24 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               }`}
             >
               <Sparkles className="w-4 h-4" />
-              <span>AI Modes</span>
+              <span className="truncate">AI Modes</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('crop');
+                if (viewMode !== 'result-only') {
+                  setViewMode('result-only');
+                }
+              }}
+              className={`p-2 rounded-xl transition-all flex flex-col items-center gap-1 ${
+                activeTab === 'crop'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Crop className="w-4 h-4" />
+              <span className="truncate">Crop</span>
             </button>
 
             <button
@@ -1431,7 +2149,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               }`}
             >
               <Palette className="w-4 h-4" />
-              <span>Backdrop</span>
+              <span className="truncate">Backdrop</span>
             </button>
 
             <button
@@ -1443,7 +2161,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               }`}
             >
               <Filter className="w-4 h-4" />
-              <span>Filters</span>
+              <span className="truncate">Filters</span>
             </button>
 
             <button
@@ -1455,7 +2173,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               }`}
             >
               <Sun className="w-4 h-4" />
-              <span>Shadows</span>
+              <span className="truncate">Shadows</span>
             </button>
 
             <button
@@ -1467,7 +2185,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               }`}
             >
               <Brush className="w-4 h-4" />
-              <span>Touch-up</span>
+              <span className="truncate">Touch-up</span>
             </button>
           </div>
 
@@ -1508,6 +2226,212 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               </button>
             </div>
           </div>
+
+          {/* ===================== TAB: CROP & SUBJECT FRAMING STUDIO ===================== */}
+          {activeTab === 'crop' && (
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Crop className="w-4 h-4 text-indigo-600" />
+                    <span>Subject Framing & Crop Studio</span>
+                  </span>
+                  <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/60 dark:border-indigo-800/60">
+                    {Math.round((cropRect.width / 100) * currentImage.originalWidth)} × {Math.round((cropRect.height / 100) * currentImage.originalHeight)} px
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Drag the interactive on-canvas handles or select social presets to frame your subject.
+                </p>
+              </div>
+
+              {/* 1. AI Subject Auto-Fit Card */}
+              <div className="p-3 rounded-xl bg-linear-to-br from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/40 dark:to-purple-950/40 border border-indigo-100 dark:border-indigo-900/50 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-950 dark:text-indigo-200">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <span>1-Click AI Subject Auto-Framing</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-300 bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-md shadow-xs">
+                    Smart Alpha Detect
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => handleAutoFitSubject(10)}
+                  disabled={isDetectingSubjectBounds}
+                  className="w-full py-2 px-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-98 rounded-lg shadow-sm shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isDetectingSubjectBounds ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Detecting Cutout Boundary...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Scan className="w-3.5 h-3.5" />
+                      <span>Auto-Fit Frame to Subject (10% padding)</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Quick Framing Presets */}
+                <div className="grid grid-cols-3 gap-1.5 text-[11px] font-semibold">
+                  <button
+                    onClick={() => handleAutoFitSubject(5)}
+                    className="p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-center"
+                    title="Tight Crop around subject (5% margin)"
+                  >
+                    Tight (5%)
+                  </button>
+                  <button
+                    onClick={() => handleAutoFitSubject(20)}
+                    className="p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-center"
+                    title="Generous breathing room (20% margin)"
+                  >
+                    Wide (20%)
+                  </button>
+                  <button
+                    onClick={() => handleAutoFitSubject(12, 1.0)}
+                    className="p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-400 hover:text-indigo-600 transition-colors text-center"
+                    title="Square 1:1 with centered subject"
+                  >
+                    1:1 Centered
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Aspect Ratio Presets Grid */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <span className="flex items-center gap-1.5">
+                    <Ratio className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Aspect Ratio Presets</span>
+                  </span>
+                  <button
+                    onClick={() => setIsLockCropRatio(!isLockCropRatio)}
+                    className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border transition-colors ${
+                      isLockCropRatio
+                        ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-300 text-indigo-600 dark:text-indigo-400'
+                        : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'
+                    }`}
+                  >
+                    {isLockCropRatio ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+                    <span>{isLockCropRatio ? 'Ratio Locked' : 'Ratio Free'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-1.5 max-h-[220px] overflow-y-auto pr-0.5">
+                  {CROP_RATIO_PRESETS.map((preset) => {
+                    const isSelected = cropAspectRatio === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        onClick={() => handleCropAspectRatioChange(preset.id)}
+                        className={`p-2 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/60 shadow-xs ring-2 ring-indigo-500/20'
+                            : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-850'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                            {preset.name}
+                          </span>
+                          {isSelected && <Check className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />}
+                        </div>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                          {preset.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Orientation Tools & Quick Transforms */}
+              <div className="flex flex-col gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Orientation & Rotate
+                </span>
+                <div className="grid grid-cols-4 gap-1.5">
+                  <button
+                    onClick={() => handleRotateImage90(true)}
+                    className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors"
+                    title="Rotate 90° Clockwise"
+                  >
+                    <RotateCw className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>90° CW</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleRotateImage90(false)}
+                    className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors"
+                    title="Rotate 90° Counter-Clockwise"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>90° CCW</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleFlipImageOrientation(true)}
+                    className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors"
+                    title="Flip Cutout Horizontally"
+                  >
+                    <FlipHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Flip H</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleFlipImageOrientation(false)}
+                    className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors"
+                    title="Flip Cutout Vertically"
+                  >
+                    <FlipVertical className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Flip V</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 4. Action Buttons */}
+              <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  onClick={handleApplyCrop}
+                  disabled={isApplyingCrop}
+                  className="w-full py-2.5 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-98 rounded-xl shadow-md shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isApplyingCrop ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Cropping & Re-rendering...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Apply Crop ({Math.round((cropRect.width / 100) * currentImage.originalWidth)} × {Math.round((cropRect.height / 100) * currentImage.originalHeight)} px)</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handleResetCrop}
+                    className="py-2 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset Frame</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('ai_modes')}
+                    className="py-2 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Done / Exit</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ===================== TAB 1: AI PROCESSING MODES ===================== */}
           {activeTab === 'ai_modes' && (
