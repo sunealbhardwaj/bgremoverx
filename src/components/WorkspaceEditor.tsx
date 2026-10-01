@@ -2563,80 +2563,138 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
           {/* ===================== TAB 2: BACKDROP & BACKGROUND STUDIO ===================== */}
           {(activeTab === 'color' || activeTab === 'gradient' || activeTab === 'backdrop') && (
             <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4">
-              {/* Sub-tab switcher */}
-              <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-lg bg-linear-to-tr from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center text-white shadow-xs">
+                    <Palette className="w-3 h-3" />
+                  </span>
+                  <span>Backdrop & Studio Environments</span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Choose transparent cutout, vibrant solid colors, dynamic gradients, or high-res studio photos.
+                </p>
+              </div>
+
+              {/* Sub-tab switcher with colorful vibrant icons for every backdrop option */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2 rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 shadow-xs">
+                {/* 1. Transparent */}
                 <button
+                  type="button"
                   onClick={() => {
                     setActiveTab('color');
                     setEditorState((prev) => ({ ...prev, backgroundMode: 'transparent' }));
                   }}
-                  className={`py-1.5 rounded-lg transition-all ${
+                  className={`p-2.5 rounded-xl transition-all flex flex-col items-center justify-center gap-1.5 font-bold text-xs cursor-pointer border ${
                     editorState.backgroundMode === 'transparent'
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
+                      ? 'bg-white dark:bg-slate-900 text-cyan-700 dark:text-cyan-300 border-cyan-500 shadow-md ring-2 ring-cyan-500/25 scale-[1.02]'
+                      : 'border-transparent text-slate-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/80 hover:scale-[1.01]'
                   }`}
+                  title="Transparent Alpha PNG (Checkerboard cutout)"
                 >
-                  Transparent
+                  <div
+                    className="w-7 h-7 rounded-xl border-2 border-cyan-400 dark:border-cyan-500 shadow-sm relative overflow-hidden flex items-center justify-center ring-2 ring-cyan-500/20"
+                    style={{
+                      backgroundImage:
+                        'linear-gradient(45deg, #0ea5e9 25%, transparent 25%), linear-gradient(-45deg, #0ea5e9 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #0ea5e9 75%), linear-gradient(-45deg, transparent 75%, #0ea5e9 75%)',
+                      backgroundSize: '6px 6px',
+                      backgroundColor: '#ffffff',
+                    }}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-xs border border-white" />
+                  </div>
+                  <span className="truncate text-[11px] font-extrabold tracking-tight">Transparent</span>
                 </button>
+
+                {/* 2. Solid Color */}
                 <button
+                  type="button"
                   onClick={() => {
                     setActiveTab('color');
                     setEditorState((prev) => ({ ...prev, backgroundMode: 'solid' }));
                   }}
-                  className={`py-1.5 rounded-lg transition-all ${
+                  className={`p-2.5 rounded-xl transition-all flex flex-col items-center justify-center gap-1.5 font-bold text-xs cursor-pointer border ${
                     editorState.backgroundMode === 'solid'
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
+                      ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 border-rose-500 shadow-md ring-2 ring-rose-500/25 scale-[1.02]'
+                      : 'border-transparent text-slate-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/80 hover:scale-[1.01]'
                   }`}
+                  title="Solid Color Palette (Vibrant plain backdrops)"
                 >
-                  Solid Color
+                  <div className="w-7 h-7 rounded-xl bg-linear-to-tr from-amber-400 via-rose-500 to-indigo-600 shadow-sm border border-white/70 ring-2 ring-rose-500/20 flex items-center justify-center">
+                    <Palette className="w-4 h-4 text-white drop-shadow-sm" />
+                  </div>
+                  <span className="truncate text-[11px] font-extrabold tracking-tight">Solid Color</span>
                 </button>
+
+                {/* 3. Gradient */}
                 <button
+                  type="button"
                   onClick={() => {
                     setActiveTab('gradient');
                     setEditorState((prev) => ({ ...prev, backgroundMode: 'gradient' }));
                   }}
-                  className={`py-1.5 rounded-lg transition-all ${
+                  className={`p-2.5 rounded-xl transition-all flex flex-col items-center justify-center gap-1.5 font-bold text-xs cursor-pointer border ${
                     editorState.backgroundMode === 'gradient'
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
+                      ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 border-purple-500 shadow-md ring-2 ring-purple-500/25 scale-[1.02]'
+                      : 'border-transparent text-slate-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/80 hover:scale-[1.01]'
                   }`}
+                  title="Multi-color Studio Gradient"
                 >
-                  Gradient
+                  <div className="w-7 h-7 rounded-xl bg-linear-to-br from-violet-600 via-fuchsia-500 to-amber-400 shadow-sm border border-white/70 ring-2 ring-fuchsia-500/20 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white drop-shadow-sm" />
+                  </div>
+                  <span className="truncate text-[11px] font-extrabold tracking-tight">Gradient</span>
                 </button>
+
+                {/* 4. Studio Photo */}
                 <button
+                  type="button"
                   onClick={() => {
                     setActiveTab('backdrop');
                     setEditorState((prev) => ({ ...prev, backgroundMode: 'image' }));
                   }}
-                  className={`py-1.5 rounded-lg transition-all ${
+                  className={`p-2.5 rounded-xl transition-all flex flex-col items-center justify-center gap-1.5 font-bold text-xs cursor-pointer border ${
                     editorState.backgroundMode === 'image'
-                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
+                      ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 border-emerald-500 shadow-md ring-2 ring-emerald-500/25 scale-[1.02]'
+                      : 'border-transparent text-slate-700 dark:text-slate-300 hover:bg-white/80 dark:hover:bg-slate-700/80 hover:scale-[1.01]'
                   }`}
+                  title="Realistic Studio Photo Backdrops"
                 >
-                  Studio Photo
+                  <div className="w-7 h-7 rounded-xl bg-linear-to-tr from-emerald-400 via-teal-500 to-sky-600 shadow-sm border border-white/70 ring-2 ring-emerald-500/20 flex items-center justify-center">
+                    <ImageIcon className="w-4 h-4 text-white drop-shadow-sm" />
+                  </div>
+                  <span className="truncate text-[11px] font-extrabold tracking-tight">Studio Photo</span>
                 </button>
               </div>
 
               {/* MODE 1: Transparent */}
               {editorState.backgroundMode === 'transparent' && (
-                <div className="text-center py-6">
-                  <div
-                    className="w-16 h-16 mx-auto rounded-2xl border border-slate-300 dark:border-slate-700 shadow-inner mb-3"
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(45deg, #cbd5e1 25%, transparent 25%), linear-gradient(-45deg, #cbd5e1 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #cbd5e1 75%), linear-gradient(-45deg, transparent 75%, #cbd5e1 75%)',
-                      backgroundSize: '12px 12px',
-                      backgroundColor: '#ffffff',
-                    }}
-                  />
-                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Transparent Alpha Matte Active
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
-                    Your image will be exported as a transparent 32-bit RGBA PNG, perfect for graphic design, logos, or e-commerce.
-                  </p>
+                <div className="p-4 rounded-2xl bg-linear-to-br from-slate-50 to-slate-100/60 dark:from-slate-800/50 dark:to-slate-900/50 border border-slate-200 dark:border-slate-800 text-center flex flex-col items-center gap-3">
+                  <div className="relative">
+                    <div
+                      className="w-16 h-16 rounded-2xl border-2 border-indigo-500/40 shadow-md flex items-center justify-center"
+                      style={{
+                        backgroundImage:
+                          'linear-gradient(45deg, #cbd5e1 25%, transparent 25%), linear-gradient(-45deg, #cbd5e1 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #cbd5e1 75%), linear-gradient(-45deg, transparent 75%, #cbd5e1 75%)',
+                        backgroundSize: '10px 10px',
+                        backgroundColor: '#ffffff',
+                      }}
+                    />
+                    <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] shadow-sm">
+                      ✨
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-center gap-1.5">
+                      <span>Transparent 32-bit Alpha PNG</span>
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+                        Active
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                      Preserves 100% transparency. Perfect for e-commerce product listings, logos, graphic design, and custom composites.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -2644,15 +2702,16 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               {editorState.backgroundMode === 'solid' && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Curated Color Palette
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Palette className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Curated Color Palette</span>
                     </span>
                     <button
                       onClick={handleEyeDropper}
-                      className="px-2 py-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 rounded-md hover:bg-indigo-100 flex items-center gap-1"
+                      className="px-2.5 py-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/60 dark:border-indigo-800/60 flex items-center gap-1.5 transition-colors cursor-pointer"
                       title="Sample color directly from screen"
                     >
-                      <Pipette className="w-3 h-3" />
+                      <Pipette className="w-3 h-3 text-indigo-500" />
                       <span>Eyedropper</span>
                     </button>
                   </div>
@@ -2670,17 +2729,17 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                           }));
                           setHexInput(color.hex);
                         }}
-                        className={`group relative h-8 rounded-lg border transition-all ${
+                        className={`group relative h-9 rounded-xl border transition-all cursor-pointer ${
                           editorState.solidColor.toLowerCase() === color.hex.toLowerCase()
-                            ? 'border-indigo-600 ring-2 ring-indigo-500/30 scale-105'
-                            : 'border-slate-200 dark:border-slate-700 hover:scale-105'
+                            ? 'border-indigo-600 ring-2 ring-indigo-500/40 scale-108 shadow-md'
+                            : 'border-slate-200 dark:border-slate-700 hover:scale-105 shadow-xs'
                         }`}
                         style={{ backgroundColor: color.hex }}
                         title={color.name}
                       >
                         {editorState.solidColor.toLowerCase() === color.hex.toLowerCase() && (
                           <div className="absolute inset-0 flex items-center justify-center text-slate-900">
-                            <Check className="w-3.5 h-3.5 drop-shadow-sm" style={{ color: color.hex === '#FFFFFF' || color.hex === '#F8FAFC' ? '#000' : '#fff' }} />
+                            <Check className="w-4 h-4 drop-shadow-sm" style={{ color: color.hex === '#FFFFFF' || color.hex === '#F8FAFC' || color.hex === '#F4F5F7' || color.hex === '#E2E8F0' ? '#000' : '#fff' }} />
                           </div>
                         )}
                       </button>
@@ -2688,16 +2747,18 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                   </div>
 
                   {/* Custom Hex Color Picker */}
-                  <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={editorState.solidColor}
-                      onChange={(e) => {
-                        setEditorState((prev) => ({ ...prev, solidColor: e.target.value }));
-                        setHexInput(e.target.value);
-                      }}
-                      className="w-9 h-9 rounded-lg border border-slate-300 dark:border-slate-700 cursor-pointer p-0.5 bg-transparent"
-                    />
+                  <div className="mt-1 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                    <div className="relative">
+                      <input
+                        type="color"
+                        value={editorState.solidColor}
+                        onChange={(e) => {
+                          setEditorState((prev) => ({ ...prev, solidColor: e.target.value }));
+                          setHexInput(e.target.value);
+                        }}
+                        className="w-9 h-9 rounded-xl border border-slate-300 dark:border-slate-700 cursor-pointer p-0.5 bg-transparent shadow-xs"
+                      />
+                    </div>
                     <div className="flex-1">
                       <input
                         type="text"
@@ -2709,7 +2770,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                           }
                         }}
                         placeholder="#FFFFFF"
-                        className="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 uppercase"
+                        className="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 uppercase focus:ring-2 focus:ring-indigo-500/30"
                       />
                     </div>
                   </div>
@@ -2719,9 +2780,16 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               {/* MODE 3: Gradient */}
               {editorState.backgroundMode === 'gradient' && (
                 <div className="flex flex-col gap-3">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Gradient Presets
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-fuchsia-500" />
+                      <span>Studio Gradient Presets</span>
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      {editorState.gradient.name}
+                    </span>
+                  </div>
+
                   <div className="grid grid-cols-3 gap-2">
                     {GRADIENT_PRESETS.map((grad) => (
                       <button
@@ -2733,10 +2801,10 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                             gradient: grad,
                           }))
                         }
-                        className={`h-12 rounded-xl border transition-all p-1 text-left ${
+                        className={`h-12 rounded-xl border transition-all p-1 text-left relative overflow-hidden cursor-pointer ${
                           editorState.gradient.id === grad.id
-                            ? 'border-indigo-600 ring-2 ring-indigo-500/30 scale-105'
-                            : 'border-slate-200 dark:border-slate-700 hover:scale-102'
+                            ? 'border-indigo-600 ring-2 ring-indigo-500/40 scale-105 shadow-md'
+                            : 'border-slate-200 dark:border-slate-700 hover:scale-102 shadow-xs'
                         }`}
                         style={{
                           background: `linear-gradient(${grad.angle}deg, ${grad.stops
@@ -2744,15 +2812,27 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                             .join(', ')})`,
                         }}
                         title={grad.name}
-                      />
+                      >
+                        {editorState.gradient.id === grad.id && (
+                          <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/90 text-indigo-700 flex items-center justify-center shadow-xs">
+                            <Check className="w-2.5 h-2.5" />
+                          </div>
+                        )}
+                        <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] truncate max-w-[85%]">
+                          {grad.name}
+                        </span>
+                      </button>
                     ))}
                   </div>
 
                   {/* Gradient Angle Slider */}
-                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="mt-1 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
-                      <span>Gradient Angle</span>
-                      <span>{editorState.gradient.angle}°</span>
+                      <span className="flex items-center gap-1">
+                        <RotateCw className="w-3 h-3 text-indigo-500" />
+                        <span>Gradient Angle</span>
+                      </span>
+                      <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{editorState.gradient.angle}°</span>
                     </div>
                     <input
                       type="range"
@@ -2775,14 +2855,15 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
               {editorState.backgroundMode === 'image' && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Studio Photo Backdrops
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-sky-500" />
+                      <span>Studio Photo Backdrops</span>
                     </span>
                     <button
                       onClick={() => customBgInputRef.current?.click()}
-                      className="px-2 py-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 rounded-md hover:bg-indigo-100 flex items-center gap-1"
+                      className="px-2.5 py-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/60 dark:border-indigo-800/60 flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
-                      <Upload className="w-3 h-3" />
+                      <Upload className="w-3 h-3 text-indigo-500" />
                       <span>Upload Custom</span>
                     </button>
                     <input
@@ -2810,10 +2891,10 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                             },
                           }))
                         }
-                        className={`group relative h-14 rounded-xl overflow-hidden border transition-all ${
+                        className={`group relative h-14 rounded-xl overflow-hidden border transition-all cursor-pointer ${
                           editorState.backdrop.url === bd.url
-                            ? 'border-indigo-600 ring-2 ring-indigo-500/30'
-                            : 'border-slate-200 dark:border-slate-700 opacity-80 hover:opacity-100'
+                            ? 'border-indigo-600 ring-2 ring-indigo-500/40 shadow-md scale-102'
+                            : 'border-slate-200 dark:border-slate-700 opacity-85 hover:opacity-100 hover:scale-102 shadow-xs'
                         }`}
                       >
                         <img
@@ -2822,19 +2903,24 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-1">
-                          <span className="text-[9px] font-bold text-white truncate">{bd.name}</span>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent flex items-end p-1.5">
+                          <span className="text-[9px] font-bold text-white truncate drop-shadow-sm">{bd.name}</span>
                         </div>
+                        {editorState.backdrop.url === bd.url && (
+                          <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                            <Check className="w-2.5 h-2.5" />
+                          </div>
+                        )}
                       </button>
                     ))}
                   </div>
 
                   {/* Backdrop Blur & Filters */}
-                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5">
+                  <div className="mt-1 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2.5">
                     <div>
                       <div className="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
                         <span>Background Blur (Depth of Field)</span>
-                        <span>{editorState.backdrop.blur}px</span>
+                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{editorState.backdrop.blur}px</span>
                       </div>
                       <input
                         type="range"
@@ -2854,7 +2940,7 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                     <div>
                       <div className="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
                         <span>Background Opacity</span>
-                        <span>{editorState.backdrop.opacity}%</span>
+                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{editorState.backdrop.opacity}%</span>
                       </div>
                       <input
                         type="range"

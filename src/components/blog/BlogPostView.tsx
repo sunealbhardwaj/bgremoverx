@@ -13,12 +13,17 @@ import {
   BookOpen,
   Layers,
   ArrowLeft,
+  ListOrdered,
+  X,
+  Link2,
+  Check,
 } from 'lucide-react';
 import { BlogPost, BlogSection } from '../../types/blog';
 import { getRelatedBlogPosts } from '../../data/blogPosts';
 import { BlogCard } from './BlogCard';
 import { SocialShareButtons } from './SocialShareButtons';
 import { BlogNewsletterSignup } from './BlogNewsletterSignup';
+import { TableOfContents } from './TableOfContents';
 
 interface BlogPostViewProps {
   post: BlogPost;
@@ -27,7 +32,33 @@ interface BlogPostViewProps {
 
 export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) => {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [showFloatingToc, setShowFloatingToc] = useState<boolean>(false);
+  const [scrolledPastHeader, setScrolledPastHeader] = useState<boolean>(false);
+  const [copiedHeaderId, setCopiedHeaderId] = useState<string | null>(null);
   const relatedPosts = getRelatedBlogPosts(post, 3);
+
+  // Scroll listener for floating Table of Contents quick-jump button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 450) {
+        setScrolledPastHeader(true);
+      } else {
+        setScrolledPastHeader(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleCopyHeaderLink = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const fullUrl = `${window.location.origin}/blog/${post.slug}#${id}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      setCopiedHeaderId(id);
+      setTimeout(() => setCopiedHeaderId(null), 2000);
+    });
+  };
 
   // Update SEO metadata and inject JSON-LD schemas
   useEffect(() => {
@@ -360,29 +391,8 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
           />
         </div>
 
-        {/* Table of Contents Box */}
-        {post.tableOfContents && post.tableOfContents.length > 0 && (
-          <aside className="mb-10 p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center gap-2 font-display text-sm font-bold text-slate-900 dark:text-white mb-3">
-              <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>In This Article (Table of Contents)</span>
-            </div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
-              {post.tableOfContents.map((item, idx) => (
-                <li key={item.id}>
-                  <a
-                    href={`#${item.id}`}
-                    onClick={(e) => scrollToSection(e, item.id)}
-                    className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1.5 py-1"
-                  >
-                    <span className="text-indigo-400 font-mono text-[11px]">{idx + 1}.</span>
-                    <span className="hover:underline">{item.title}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </aside>
-        )}
+        {/* Dynamic Table of Contents Box */}
+        <TableOfContents post={post} className="mb-10" />
 
         {/* Introduction */}
         <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed space-y-4 mb-10">
@@ -421,14 +431,47 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
         <div className="space-y-12">
           {post.sections.map((section) => (
             <section key={section.id} id={section.id} className="scroll-mt-24">
-              <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug mb-4">
-                {section.heading}
-              </h2>
+              <div className="group flex items-center justify-between gap-2 mb-4">
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
+                  {section.heading}
+                </h2>
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyHeaderLink(e, section.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                  title="Copy link to this section"
+                  aria-label={`Copy link to ${section.heading}`}
+                >
+                  {copiedHeaderId === section.id ? (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <Link2 className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
 
               {section.subheading && (
-                <h3 className="font-display text-base sm:text-lg font-semibold text-slate-700 dark:text-slate-300 mb-3">
-                  {section.subheading}
-                </h3>
+                <div
+                  id={`${section.id}-subheading`}
+                  className="scroll-mt-24 group flex items-center justify-between gap-2 mb-3"
+                >
+                  <h3 className="font-display text-base sm:text-lg font-semibold text-slate-700 dark:text-slate-300">
+                    {section.subheading}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={(e) => handleCopyHeaderLink(e, `${section.id}-subheading`)}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                    title="Copy link to this subsection"
+                    aria-label={`Copy link to ${section.subheading}`}
+                  >
+                    {copiedHeaderId === `${section.id}-subheading` ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <Link2 className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
               )}
 
               {section.paragraphs.map((p, pIdx) => (
@@ -499,34 +542,52 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
               {/* Subsections if present */}
               {section.subsections && section.subsections.length > 0 && (
                 <div className="my-6 space-y-6 pl-1 sm:pl-3 border-l-2 border-indigo-100 dark:border-indigo-900/60">
-                  {section.subsections.map((sub, subIdx) => (
-                    <div key={subIdx} className="space-y-3">
-                      <h4 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                        {sub.heading}
-                      </h4>
-                      {sub.paragraphs.map((subP, spIdx) => (
-                        <p
-                          key={spIdx}
-                          className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
-                        >
-                          {renderRichText(subP)}
-                        </p>
-                      ))}
-                      {sub.bulletPoints && (
-                        <ul className="space-y-1.5 pl-2">
-                          {sub.bulletPoints.map((subBp, sbpIdx) => (
-                            <li
-                              key={sbpIdx}
-                              className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2 leading-relaxed"
-                            >
-                              <div className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500 mt-2 shrink-0" />
-                              <span>{renderRichText(subBp)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
+                  {section.subsections.map((sub, subIdx) => {
+                    const subId = `${section.id}-sub-${subIdx}`;
+                    return (
+                      <div key={subIdx} id={subId} className="scroll-mt-24 space-y-3">
+                        <div className="group flex items-center justify-between gap-2">
+                          <h4 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                            {sub.heading}
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyHeaderLink(e, subId)}
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                            title="Copy link to this subsection"
+                            aria-label={`Copy link to ${sub.heading}`}
+                          >
+                            {copiedHeaderId === subId ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <Link2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                        {sub.paragraphs.map((subP, spIdx) => (
+                          <p
+                            key={spIdx}
+                            className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                          >
+                            {renderRichText(subP)}
+                          </p>
+                        ))}
+                        {sub.bulletPoints && (
+                          <ul className="space-y-1.5 pl-2">
+                            {sub.bulletPoints.map((subBp, sbpIdx) => (
+                              <li
+                                key={sbpIdx}
+                                className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 flex items-start gap-2 leading-relaxed"
+                              >
+                                <div className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-500 mt-2 shrink-0" />
+                                <span>{renderRichText(subBp)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -584,11 +645,26 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
 
         {/* Common Mistakes & Solutions */}
         {post.commonMistakes && post.commonMistakes.length > 0 && (
-          <div className="mt-12 p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <h3 className="font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <span>Common Mistakes and Practical Solutions</span>
-            </h3>
+          <section id="common-mistakes" className="scroll-mt-24 mt-12 p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="group flex items-center justify-between gap-2 mb-4">
+              <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                <span>Common Mistakes and Practical Solutions</span>
+              </h2>
+              <button
+                type="button"
+                onClick={(e) => handleCopyHeaderLink(e, 'common-mistakes')}
+                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                title="Copy link to this section"
+                aria-label="Copy link to Common Mistakes and Practical Solutions"
+              >
+                {copiedHeaderId === 'common-mistakes' ? (
+                  <Check className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <Link2 className="w-4 h-4" />
+                )}
+              </button>
+            </div>
 
             <div className="space-y-4">
               {post.commonMistakes.map((item, idx) => (
@@ -606,29 +682,59 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* Conclusion */}
-        <div className="mt-12 p-6 sm:p-8 rounded-3xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50">
-          <h3 className="font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3">
-            Summary & Final Thoughts
-          </h3>
+        <section id="summary-conclusion" className="scroll-mt-24 mt-12 p-6 sm:p-8 rounded-3xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50">
+          <div className="group flex items-center justify-between gap-2 mb-3">
+            <h2 className="font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+              Summary & Final Thoughts
+            </h2>
+            <button
+              type="button"
+              onClick={(e) => handleCopyHeaderLink(e, 'summary-conclusion')}
+              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+              title="Copy link to this section"
+              aria-label="Copy link to Summary and Final Thoughts"
+            >
+              {copiedHeaderId === 'summary-conclusion' ? (
+                <Check className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Link2 className="w-4 h-4" />
+              )}
+            </button>
+          </div>
           <div className="space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
             {post.conclusionParagraphs.map((p, idx) => (
               <p key={idx}>{renderRichText(p)}</p>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* FAQs Section */}
         {post.faqs && post.faqs.length > 0 && (
           <section id="faq-section" className="mt-14 scroll-mt-24">
-            <div className="flex items-center gap-2 mb-6">
-              <HelpCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                Frequently Asked Questions
-              </h2>
+            <div className="group flex items-center justify-between gap-2 mb-6">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                  Frequently Asked Questions
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => handleCopyHeaderLink(e, 'faq-section')}
+                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                title="Copy link to this section"
+                aria-label="Copy link to Frequently Asked Questions"
+              >
+                {copiedHeaderId === 'faq-section' ? (
+                  <Check className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <Link2 className="w-4 h-4" />
+                )}
+              </button>
             </div>
 
             <div className="space-y-3">
@@ -759,6 +865,49 @@ export const BlogPostView: React.FC<BlogPostViewProps> = ({ post, onNavigate }) 
               ))}
             </div>
           </section>
+        )}
+
+        {/* Floating Quick Jump Table of Contents Button (appears when scrolling down) */}
+        {scrolledPastHeader && (
+          <div className="fixed bottom-6 right-6 z-40">
+            <button
+              type="button"
+              onClick={() => setShowFloatingToc(!showFloatingToc)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs shadow-xl shadow-indigo-600/30 transition-all cursor-pointer border border-indigo-500/40"
+              title="Table of Contents Quick Jump"
+              aria-label="Toggle Table of Contents"
+            >
+              <ListOrdered className="w-4 h-4" />
+              <span>Table of Contents</span>
+            </button>
+          </div>
+        )}
+
+        {/* Floating Table of Contents Modal/Drawer */}
+        {showFloatingToc && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+            onClick={() => setShowFloatingToc(false)}
+          >
+            <div
+              className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowFloatingToc(false)}
+                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                title="Close Table of Contents"
+                aria-label="Close Table of Contents"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <TableOfContents
+                post={post}
+                onNavigateSection={() => setShowFloatingToc(false)}
+              />
+            </div>
+          </div>
         )}
 
       </div>
