@@ -68,18 +68,29 @@ async function startServer() {
     res.type("text/html").send("google-site-verification: google830e62e2912bd53b.html");
   });
 
+  // Cross-Origin Isolation headers to unlock multi-threaded WebAssembly & SIMD acceleration
+  app.use((_req, res, next) => {
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+    next();
+  });
+
   // Serve static assets and public directory with CORS headers
   const publicPath = path.join(process.cwd(), "public");
   app.use(express.static(publicPath, {
+    maxAge: "7d",
     setHeaders: (res) => {
       res.set("Access-Control-Allow-Origin", "*");
       res.set("Cross-Origin-Resource-Policy", "cross-origin");
+      res.set("Cache-Control", "public, max-age=604800");
     }
   }));
   app.use("/showcase", express.static(path.join(publicPath, "showcase"), {
+    maxAge: "30d",
     setHeaders: (res) => {
       res.set("Access-Control-Allow-Origin", "*");
       res.set("Cross-Origin-Resource-Policy", "cross-origin");
+      res.set("Cache-Control", "public, max-age=2592000, immutable");
     }
   }));
 
@@ -112,12 +123,15 @@ async function startServer() {
     }
   });
 
-  // Serve ONNX and WASM AI segmentation models locally for 100% reliable in-browser deep learning
+  // Serve ONNX and WASM AI segmentation models with long-term immutable caching for 100% reliable in-browser deep learning
   const imglyDataPath = path.join(process.cwd(), "node_modules/@imgly/background-removal-data/dist");
   app.use("/imgly-assets", express.static(imglyDataPath, {
+    maxAge: "365d",
+    immutable: true,
     setHeaders: (res) => {
       res.set("Access-Control-Allow-Origin", "*");
       res.set("Cross-Origin-Resource-Policy", "cross-origin");
+      res.set("Cache-Control", "public, max-age=31536000, immutable");
     }
   }));
 

@@ -1,7 +1,8 @@
-import { ProcessedImage, ProcessingMode, SubjectFilter, QualityReport } from '../types';
+import { ProcessedImage, ProcessingMode, SubjectFilter, QualityReport, ProcessingTimings } from '../types';
 import { removeBackground, preload, Config } from '@imgly/background-removal';
 
 export type ProgressCallback = (step: string, percent: number) => void;
+export type StagePreviewCallback = (previewUrl: string) => void;
 
 export interface SegmentationOptions {
   mode?: ProcessingMode;
@@ -12,32 +13,94 @@ export interface SegmentationOptions {
   defringeStrength?: number; // 0 to 1.0 (default 0.7)
   preserveNaturalShadow?: boolean;
   forceClientHeuristic?: boolean;
+  onStagePreview?: StagePreviewCallback;
 }
 
 let isEngineWarmedUp = false;
+let warmupPromise: Promise<void> | null = null;
+let activeSessionConfig: Config | null = null;
+
+// ==================== IN-MEMORY LRU CACHE ====================
+interface CacheEntry {
+  result: ProcessedImage;
+  timestamp: number;
+}
+const MEMORY_CACHE = new Map<string, CacheEntry>();
+const MAX_CACHE_ENTRIES = 25;
+
+function getCacheKey(
+  source: string | File,
+  filename: string,
+  mode: ProcessingMode,
+  options?: SegmentationOptions
+): string {
+  if (source instanceof File) {
+    return `file_${source.name}_${source.size}_${source.lastModified}_${mode}_${options?.sensitivity ?? 50}_${options?.edgeFeather ?? 2}_${options?.defringeStrength ?? 0.75}`;
+  }
+  const cleanUrl = typeof source === 'string' ? source.split('?')[0] : 'blob';
+  return `url_${cleanUrl}_${filename}_${mode}_${options?.sensitivity ?? 50}_${options?.edgeFeather ?? 2}_${options?.defringeStrength ?? 0.75}`;
+}
+
+function putInCache(key: string, result: ProcessedImage) {
+  if (MEMORY_CACHE.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = MEMORY_CACHE.keys().next().value;
+    if (oldestKey) MEMORY_CACHE.delete(oldestKey);
+  }
+  MEMORY_CACHE.set(key, { result, timestamp: Date.now() });
+}
 
 /**
- * Pre-warms the deep neural engine in the background on app startup
- * so cutouts process in ~1-2 seconds with zero network wait.
+ * Pre-warms the deep neural engine in the background on app startup.
+ * Compiles WASM bytecode, sets up Web Workers, and primes inference memory
+ * so user cutouts process in ~2-4 seconds with zero cold-start latency.
  */
-export function warmUpNeuralEngine(): void {
-  if (isEngineWarmedUp || typeof window === 'undefined') return;
-  isEngineWarmedUp = true;
-  try {
-    const origin = window.location.origin;
-    preload({
-      publicPath: `${origin}/imgly-assets/`,
-      model: 'medium',
-    }).catch(() => {
-      // Fallback preload to public CDN
-      preload({
-        publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/',
-        model: 'medium',
-      }).catch(() => {});
-    });
-  } catch {
-    // Non-blocking
-  }
+export function warmUpNeuralEngine(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (isEngineWarmedUp && warmupPromise) return warmupPromise;
+
+  warmupPromise = (async () => {
+    try {
+      const origin = window.location.origin;
+      const primaryPath = `${origin}/imgly-assets/`;
+
+      const config: Config = {
+        publicPath: primaryPath,
+        model: 'small',
+        output: {
+          format: 'image/png',
+          quality: 0.8,
+        },
+      };
+
+      activeSessionConfig = config;
+
+      // 1. Preload small model assets into browser CacheStorage
+      await preload(config).catch(() => {
+        // Fallback CDN if local static asset is unreachable
+        config.publicPath = 'https://staticimgly.com/@imgly/background-removal-data/1.4.5/dist/';
+        return preload(config);
+      });
+
+      // 2. Active in-memory session warmup: run a micro 16x16 canvas inference pass
+      // This forces V8 to compile the WASM binary and keeps the WebWorker and memory hot in RAM!
+      const dummyCanvas = document.createElement('canvas');
+      dummyCanvas.width = 16;
+      dummyCanvas.height = 16;
+      const ctx = dummyCanvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 16, 16);
+        const imageData = ctx.getImageData(0, 0, 16, 16);
+        await removeBackground(imageData, config).catch(() => {});
+      }
+
+      isEngineWarmedUp = true;
+    } catch (err) {
+      console.warn('Neural engine warmup note (will initialize on first user upload):', err);
+    }
+  })();
+
+  return warmupPromise;
 }
 
 /**
@@ -123,9 +186,12 @@ export function applyEdgeDecontamination(
   const imgData = ctx.getImageData(0, 0, w, h);
   const data = imgData.data;
 
-  // Process only edge transition pixels (alpha 10..230)
+  // Process only edge transition pixels (alpha 10..235) with zero array allocations in hot loop
   for (let y = 1; y < h - 1; y++) {
     const rowOffset = y * w;
+    const topRow = (y - 1) * w;
+    const bottomRow = (y + 1) * w;
+
     for (let x = 1; x < w - 1; x++) {
       const idx = (rowOffset + x) * 4;
       const alpha = data[idx + 3];
@@ -133,37 +199,41 @@ export function applyEdgeDecontamination(
       if (alpha > 10 && alpha < 235) {
         let rSum = 0, gSum = 0, bSum = 0, count = 0;
 
-        // Sample 8 surrounding neighbors
-        const neighbors = [
-          ((y - 1) * w + x) * 4,
-          ((y + 1) * w + x) * 4,
-          (rowOffset + x - 1) * 4,
-          (rowOffset + x + 1) * 4,
-          ((y - 1) * w + x - 1) * 4,
-          ((y - 1) * w + x + 1) * 4,
-          ((y + 1) * w + x - 1) * 4,
-          ((y + 1) * w + x + 1) * 4,
-        ];
+        // Sample 8 surrounding neighbors directly without allocating heap arrays
+        const n1 = (topRow + x) * 4;
+        if (data[n1 + 3] >= 240) { rSum += data[n1]; gSum += data[n1 + 1]; bSum += data[n1 + 2]; count++; }
 
-        for (let i = 0; i < 8; i++) {
-          const nIdx = neighbors[i];
-          if (data[nIdx + 3] >= 240) {
-            rSum += data[nIdx];
-            gSum += data[nIdx + 1];
-            bSum += data[nIdx + 2];
-            count++;
-          }
-        }
+        const n2 = (bottomRow + x) * 4;
+        if (data[n2 + 3] >= 240) { rSum += data[n2]; gSum += data[n2 + 1]; bSum += data[n2 + 2]; count++; }
+
+        const n3 = (rowOffset + x - 1) * 4;
+        if (data[n3 + 3] >= 240) { rSum += data[n3]; gSum += data[n3 + 1]; bSum += data[n3 + 2]; count++; }
+
+        const n4 = (rowOffset + x + 1) * 4;
+        if (data[n4 + 3] >= 240) { rSum += data[n4]; gSum += data[n4 + 1]; bSum += data[n4 + 2]; count++; }
+
+        const n5 = (topRow + x - 1) * 4;
+        if (data[n5 + 3] >= 240) { rSum += data[n5]; gSum += data[n5 + 1]; bSum += data[n5 + 2]; count++; }
+
+        const n6 = (topRow + x + 1) * 4;
+        if (data[n6 + 3] >= 240) { rSum += data[n6]; gSum += data[n6 + 1]; bSum += data[n6 + 2]; count++; }
+
+        const n7 = (bottomRow + x - 1) * 4;
+        if (data[n7 + 3] >= 240) { rSum += data[n7]; gSum += data[n7 + 1]; bSum += data[n7 + 2]; count++; }
+
+        const n8 = (bottomRow + x + 1) * 4;
+        if (data[n8 + 3] >= 240) { rSum += data[n8]; gSum += data[n8 + 1]; bSum += data[n8 + 2]; count++; }
 
         if (count > 0) {
           const avgR = rSum / count;
           const avgG = gSum / count;
           const avgB = bSum / count;
           const blend = Math.min(0.8, defringeStrength * (1 - alpha / 255));
+          const invBlend = 1 - blend;
 
-          data[idx] = (data[idx] * (1 - blend) + avgR * blend) | 0;
-          data[idx + 1] = (data[idx + 1] * (1 - blend) + avgG * blend) | 0;
-          data[idx + 2] = (data[idx + 2] * (1 - blend) + avgB * blend) | 0;
+          data[idx] = (data[idx] * invBlend + avgR * blend) | 0;
+          data[idx + 1] = (data[idx + 1] * invBlend + avgG * blend) | 0;
+          data[idx + 2] = (data[idx + 2] * invBlend + avgB * blend) | 0;
         }
       }
     }

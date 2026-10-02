@@ -1,6 +1,18 @@
 export type BackgroundMode = 'transparent' | 'solid' | 'gradient' | 'image';
 
-export type ProcessingMode = 'standard' | 'hd' | 'ultra_hd' | 'portrait' | 'full_body' | 'product' | 'hair_fur';
+export type ProcessingMode = 'auto' | 'fast' | 'standard' | 'hd' | 'ultra_hd' | 'portrait' | 'full_body' | 'product' | 'hair_fur';
+
+export interface ProcessingTimings {
+  uploadTimeMs?: number;
+  imageDecodeTimeMs: number;
+  preprocessingTimeMs: number;
+  modelLoadTimeMs: number;
+  inferenceTimeMs: number;
+  maskProcessingTimeMs: number;
+  edgeRefinementTimeMs: number;
+  exportTimeMs: number;
+  totalProcessingTimeMs: number;
+}
 
 export type SubjectFilter = 'all' | 'main' | 'secondary';
 
@@ -86,11 +98,13 @@ export interface ProcessedImage {
   originalHeight: number;
   fileSizeFormatted: string;
   mimeType: string;
-  cutoutUrl: string; // Transparent PNG data URL
+  cutoutUrl: string; // Transparent PNG URL
+  previewUrl?: string; // Fast initial preview URL (Stage 1)
   maskUrl?: string; // Binary/alpha mask data URL
   processingMode?: ProcessingMode;
   processingDurationMs: number;
   qualityReport?: QualityReport;
+  performanceTimings?: ProcessingTimings;
   aiInsights?: {
     subjectType: string;
     subjectCount?: number;

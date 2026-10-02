@@ -1363,6 +1363,18 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
 
   // Mode descriptions helper
   const MODE_INFO: Record<ProcessingMode, { name: string; desc: string; badge: string; icon: string }> = {
+    auto: {
+      name: 'Smart Auto Adaptive',
+      desc: 'Intelligently analyzes image dimensions and complexity to balance blazing speed with crisp edge clarity.',
+      badge: 'Smart Auto',
+      icon: '⚡',
+    },
+    fast: {
+      name: 'Turbo Fast',
+      desc: 'Optimized inference resolution with lightning edge generation. Perfect for rapid previews and high-volume workflows in 2-4s.',
+      badge: 'Ultra Fast',
+      icon: '🚀',
+    },
     hd: {
       name: 'HD Neural Matting',
       desc: 'Balanced high-precision neural edge matting. Excellent for general studio portraits and items.',
